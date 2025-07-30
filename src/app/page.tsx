@@ -1,274 +1,276 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/AuthModal';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [gameMode, setGameMode] = useState<'ai' | 'multiplayer' | null>(null);
   const { user, loading, logout } = useAuth();
   const router = useRouter();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Home component mounted');
-    console.log('User:', user);
-    console.log('Loading:', loading);
-    console.log('Functions defined:', {
-      handleStartAIGame: typeof handleStartAIGame,
-      handleQuickMatch: typeof handleQuickMatch,
-      handleViewDemo: typeof handleViewDemo
-    });
-  }, [user, loading]);
-
   const handleSignIn = () => {
-    console.log('Sign in clicked'); // Debug log
     setShowAuthModal(true);
   };
 
-  const handleStartAIGame = (e?: React.MouseEvent) => {
-    console.log('Start AI Game clicked'); // Debug log
-    console.log('Event handler called successfully');
-    console.log('Event:', e);
-    e?.preventDefault();
-    e?.stopPropagation();
-    setGameMode('ai');
+  const handleStartAIGame = () => {
     router.push('/ai-game');
   };
 
-  const handleQuickMatch = (e?: React.MouseEvent) => {
-    console.log('Quick Match clicked'); // Debug log
-    console.log('Event handler called successfully');
-    console.log('Event:', e);
-    e?.preventDefault();
-    e?.stopPropagation();
-    setGameMode('multiplayer');
+  const handleQuickMatch = () => {
     router.push('/multiplayer');
-  };
-
-  const handleViewDemo = (e?: React.MouseEvent) => {
-    console.log('View Demo clicked'); // Debug log
-    console.log('Event handler called successfully');
-    console.log('Event:', e);
-    e?.preventDefault();
-    e?.stopPropagation();
-    router.push('/analysis');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-          {/* Debug button even during loading */}
-          <button
-            onClick={() => alert('Loading state button works!')}
-            className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Test During Loading
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-xl text-white font-medium">Loading Chess Platform...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Demo Mode Banner */}
-      {user && user.uid === 'demo-user' && (
-        <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-4">
-          <div className="flex items-center">
-            <div className="ml-3">
-              <p className="text-sm">
-                🎮 <strong>Demo Mode Active</strong> - You're signed in as Demo Player.
-                All features work, but data won't be saved.
-                <a href="#" className="underline ml-1">Set up Firebase for real authentication</a>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Test Button - Remove this after testing */}
-      <button
-        onClick={() => {
-          console.log('Test button clicked!');
-          alert('Test button works!');
-        }}
-        className="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-2 rounded"
-      >
-        Test Click
-      </button>
-
-      {/* Additional diagnostic buttons */}
-      <div className="fixed top-4 left-4 z-50 space-y-2">
-        <button
-          onClick={() => console.log('Diagnostic 1 clicked')}
-          className="block bg-yellow-500 text-black px-2 py-1 rounded text-xs"
-        >
-          Diag 1
-        </button>
-        <button
-          onClick={handleStartAIGame}
-          className="block bg-orange-500 text-white px-2 py-1 rounded text-xs"
-        >
-          AI Test
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            rotate: -360,
+            scale: [1.2, 1, 1.2]
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"
+        />
       </div>
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold text-gray-900">AI Chess Platform</h1>
-            </div>
+
+      {/* Navigation */}
+      <nav className="relative z-10 bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center space-x-3"
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">♟</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  ChessMaster Pro
+                </h1>
+                <p className="text-sm text-gray-400">Professional Chess Platform</p>
+              </div>
+            </motion.div>
+
             {!user ? (
-              <button
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleSignIn}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Sign In
-              </button>
+                Sign In to Play
+              </motion.button>
             ) : (
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Welcome, {user.username}!</span>
-                <button
-                  onClick={async () => {
-                    console.log('Logout clicked'); // Debug log
-                    try {
-                      await logout();
-                    } catch (error) {
-                      console.error('Logout error:', error);
-                    }
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              <div className="flex items-center space-x-6">
+                <div className="text-right">
+                  <p className="text-white font-semibold">Welcome back!</p>
+                  <p className="text-blue-300 text-sm">{user.username}</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={logout}
+                  className="bg-red-600/20 border border-red-500/30 text-red-300 px-4 py-2 rounded-lg hover:bg-red-600/30 transition-all duration-300"
                 >
                   Logout
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Professional Chess Platform
+      {/* Hero Section */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-6xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              Master the Game
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Play against our advanced AI engine with 10 difficulty levels, challenge friends in real-time multiplayer,
-            and analyze your games with professional-grade Stockfish evaluation.
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Experience chess like never before with our AI-powered platform featuring
+            <span className="text-blue-400 font-semibold"> Stockfish engine</span>,
+            real-time multiplayer, and professional game analysis.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+        {/* Game Mode Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          {/* AI Game Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ y: -8, transition: { duration: 0.2 } }}
+            className="group relative bg-gradient-to-br from-blue-900/50 to-indigo-900/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 hover:border-blue-400/40 transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6">
                 <span className="text-2xl">🤖</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Play vs AI</h3>
-              <p className="text-gray-600 mb-6">
-                Challenge our Stockfish-powered AI with difficulty levels from beginner to grandmaster.
+              <h3 className="text-2xl font-bold text-white mb-4">AI Challenge</h3>
+              <p className="text-gray-300 mb-6 leading-relaxed">
+                Test your skills against our advanced Stockfish-powered AI with 10 difficulty levels.
+                From beginner-friendly to grandmaster strength.
               </p>
-              <button
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <div className="text-center">
+                    <p className="text-blue-400 font-semibold">10</p>
+                    <p className="text-xs text-gray-400">Levels</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-green-400 font-semibold">2500+</p>
+                    <p className="text-xs text-gray-400">Max ELO</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-purple-400 font-semibold">∞</p>
+                    <p className="text-xs text-gray-400">Games</p>
+                  </div>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleStartAIGame}
-                style={{ pointerEvents: 'auto', zIndex: 10 }}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-medium transition-colors cursor-pointer"
-                onMouseDown={() => console.log('Start AI Game mousedown')}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Start AI Game
-              </button>
+                Challenge AI
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+          {/* Multiplayer Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            whileHover={{ y: -8, transition: { duration: 0.2 } }}
+            className="group relative bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8 hover:border-purple-400/40 transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6">
                 <span className="text-2xl">👥</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Play with Friends</h3>
-              <p className="text-gray-600 mb-6">
-                Create or join rooms to play real-time chess with friends around the world.
+              <h3 className="text-2xl font-bold text-white mb-4">Multiplayer Arena</h3>
+              <p className="text-gray-300 mb-6 leading-relaxed">
+                Challenge friends in real-time chess battles. Create private rooms,
+                share codes, and enjoy seamless cross-device gameplay.
               </p>
-              <button
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <div className="text-center">
+                    <p className="text-purple-400 font-semibold">2</p>
+                    <p className="text-xs text-gray-400">Players</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-pink-400 font-semibold">Real-time</p>
+                    <p className="text-xs text-gray-400">Sync</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-blue-400 font-semibold">Global</p>
+                    <p className="text-xs text-gray-400">Access</p>
+                  </div>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleQuickMatch}
-                style={{ pointerEvents: 'auto', zIndex: 10 }}
-                className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 font-medium transition-colors cursor-pointer"
-                onMouseDown={() => console.log('Quick Match mousedown')}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Quick Match
-              </button>
+                Play with Friends
+              </motion.button>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">📊</span>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Game Analysis</h3>
-              <p className="text-gray-600 mb-6">
-                Get detailed post-game analysis with move evaluation and improvement suggestions.
-              </p>
-              <button
-                onClick={handleViewDemo}
-                style={{ pointerEvents: 'auto', zIndex: 10 }}
-                className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 font-medium transition-colors cursor-pointer"
-                onMouseDown={() => console.log('View Demo mousedown')}
-              >
-                View Demo
-              </button>
-            </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Platform Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                <span className="text-2xl">♔</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Stockfish AI</h4>
-              <p className="text-sm text-gray-600">Industry-standard chess engine with adjustable difficulty</p>
+        {/* Features Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-blue-400 text-2xl">⚡</span>
             </div>
-
-            <div className="text-center">
-              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                <span className="text-2xl">⚡</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Real-time Multiplayer</h4>
-              <p className="text-sm text-gray-600">Play with friends in real-time with room system</p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                <span className="text-2xl">📈</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Game Analysis</h4>
-              <p className="text-sm text-gray-600">Detailed post-game analysis with move evaluation</p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-yellow-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                <span className="text-2xl">🏆</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">ELO Rating</h4>
-              <p className="text-sm text-gray-600">Track your progress with competitive rating system</p>
-            </div>
+            <h4 className="text-lg font-semibold text-white mb-2">Lightning Fast</h4>
+            <p className="text-gray-400 text-sm">Optimized performance with instant move validation and smooth animations</p>
           </div>
-        </div>
-      </main>
+
+          <div className="text-center">
+            <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-green-400 text-2xl">🎯</span>
+            </div>
+            <h4 className="text-lg font-semibold text-white mb-2">Professional Analysis</h4>
+            <p className="text-gray-400 text-sm">Advanced game evaluation with Stockfish-powered move suggestions</p>
+          </div>
+
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-purple-400 text-2xl">🌐</span>
+            </div>
+            <h4 className="text-lg font-semibold text-white mb-2">Cross-Platform</h4>
+            <p className="text-gray-400 text-sm">Play seamlessly across desktop, tablet, and mobile devices</p>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Auth Modal */}
       {showAuthModal && (
-        <AuthModal
+        <AuthModal 
           isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => setShowAuthModal(false)} 
         />
       )}
     </div>
