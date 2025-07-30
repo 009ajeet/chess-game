@@ -77,6 +77,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Demo Mode Banner */}
+      {user && user.uid === 'demo-user' && (
+        <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-4">
+          <div className="flex items-center">
+            <div className="ml-3">
+              <p className="text-sm">
+                🎮 <strong>Demo Mode Active</strong> - You're signed in as Demo Player. 
+                All features work, but data won't be saved. 
+                <a href="#" className="underline ml-1">Set up Firebase for real authentication</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Test Button - Remove this after testing */}
       <button
         onClick={() => {
