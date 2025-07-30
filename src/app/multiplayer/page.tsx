@@ -159,7 +159,7 @@ export default function MultiplayerPage() {
     if (!user) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center max-w-md"
@@ -187,24 +187,24 @@ export default function MultiplayerPage() {
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 relative overflow-hidden">
                 {/* Animated Background */}
                 <div className="absolute inset-0 overflow-hidden">
-                    <motion.div 
-                        animate={{ 
+                    <motion.div
+                        animate={{
                             rotate: 360,
                             scale: [1, 1.2, 1]
                         }}
-                        transition={{ 
+                        transition={{
                             duration: 25,
                             repeat: Infinity,
                             ease: "linear"
                         }}
                         className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"
                     />
-                    <motion.div 
-                        animate={{ 
+                    <motion.div
+                        animate={{
                             rotate: -360,
                             scale: [1.2, 1, 1.2]
                         }}
-                        transition={{ 
+                        transition={{
                             duration: 30,
                             repeat: Infinity,
                             ease: "linear"
@@ -215,7 +215,7 @@ export default function MultiplayerPage() {
 
                 <div className="relative z-10 max-w-6xl mx-auto p-6">
                     {/* Header */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-8"
@@ -241,7 +241,7 @@ export default function MultiplayerPage() {
                     {/* Game Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Create Room */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6, delay: 0.2 }}
@@ -277,7 +277,7 @@ export default function MultiplayerPage() {
                         </motion.div>
 
                         {/* Join Room */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6, delay: 0.4 }}
@@ -332,24 +332,24 @@ export default function MultiplayerPage() {
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 relative overflow-hidden">
             {/* Animated Background */}
             <div className="absolute inset-0 overflow-hidden">
-                <motion.div 
-                    animate={{ 
+                <motion.div
+                    animate={{
                         rotate: 360,
                         scale: [1, 1.1, 1]
                     }}
-                    transition={{ 
+                    transition={{
                         duration: 35,
                         repeat: Infinity,
                         ease: "linear"
                     }}
                     className="absolute top-1/3 left-1/3 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl"
                 />
-                <motion.div 
-                    animate={{ 
+                <motion.div
+                    animate={{
                         rotate: -360,
                         scale: [1.1, 1, 1.1]
                     }}
-                    transition={{ 
+                    transition={{
                         duration: 40,
                         repeat: Infinity,
                         ease: "linear"
@@ -360,7 +360,7 @@ export default function MultiplayerPage() {
 
             <div className="relative z-10 max-w-7xl mx-auto p-6">
                 {/* Header */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-6"
@@ -406,7 +406,7 @@ export default function MultiplayerPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                     {/* Game Board */}
                     <div className="xl:col-span-3">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
@@ -414,14 +414,13 @@ export default function MultiplayerPage() {
                         >
                             {/* Turn Indicator */}
                             <div className="mb-6 text-center">
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className={`inline-flex items-center space-x-3 px-6 py-3 rounded-xl border ${
-                                        isPlayerTurn
+                                    className={`inline-flex items-center space-x-3 px-6 py-3 rounded-xl border ${isPlayerTurn
                                             ? 'bg-green-500/20 border-green-400/30 text-green-300'
                                             : 'bg-yellow-500/20 border-yellow-400/30 text-yellow-300'
-                                    }`}
+                                        }`}
                                 >
                                     <div className={`w-3 h-3 rounded-full ${isPlayerTurn ? 'bg-green-400' : 'bg-yellow-400'} ${!isPlayerTurn ? 'animate-pulse' : ''}`} />
                                     <span className="font-semibold">
@@ -432,7 +431,7 @@ export default function MultiplayerPage() {
 
                             {/* Chessboard */}
                             <div className="flex justify-center">
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, delay: 0.4 }}
@@ -460,7 +459,7 @@ export default function MultiplayerPage() {
                     {/* Side Panel */}
                     <div className="space-y-6">
                         {/* Game Status */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.3 }}
@@ -512,7 +511,7 @@ export default function MultiplayerPage() {
                         </motion.div>
 
                         {/* Quick Actions */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.4 }}

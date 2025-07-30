@@ -167,7 +167,7 @@ export default function Home() {
                     <p className="text-xs text-gray-400">Levels</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-green-400 font-semibold">2500+</p>
+                    <p className="text-green-400 font-semibold">2600</p>
                     <p className="text-xs text-gray-400">Max ELO</p>
                   </div>
                   <div className="text-center">

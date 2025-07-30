@@ -174,24 +174,24 @@ export default function AIGamePage() {
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
             {/* Animated Background */}
             <div className="absolute inset-0 overflow-hidden">
-                <motion.div 
-                    animate={{ 
+                <motion.div
+                    animate={{
                         rotate: 360,
                         scale: [1, 1.1, 1]
                     }}
-                    transition={{ 
+                    transition={{
                         duration: 30,
                         repeat: Infinity,
                         ease: "linear"
                     }}
                     className="absolute top-1/3 left-1/3 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl"
                 />
-                <motion.div 
-                    animate={{ 
+                <motion.div
+                    animate={{
                         rotate: -360,
                         scale: [1.1, 1, 1.1]
                     }}
-                    transition={{ 
+                    transition={{
                         duration: 25,
                         repeat: Infinity,
                         ease: "linear"
@@ -202,7 +202,7 @@ export default function AIGamePage() {
 
             <div className="relative z-10 max-w-7xl mx-auto p-6">
                 {/* Header */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-6"
@@ -228,7 +228,7 @@ export default function AIGamePage() {
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                     {/* Game Board */}
                     <div className="xl:col-span-3">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
@@ -237,7 +237,7 @@ export default function AIGamePage() {
                             {/* Status Bar */}
                             <div className="mb-6 text-center">
                                 {isThinking && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         className="inline-flex items-center space-x-3 bg-blue-500/20 border border-blue-400/30 rounded-xl px-6 py-3"
@@ -247,7 +247,7 @@ export default function AIGamePage() {
                                     </motion.div>
                                 )}
                                 {gameStatus && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         className="inline-block bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-xl px-6 py-3"
@@ -256,7 +256,7 @@ export default function AIGamePage() {
                                     </motion.div>
                                 )}
                                 {!engineReady && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         className="inline-flex items-center space-x-3 bg-yellow-500/20 border border-yellow-400/30 rounded-xl px-6 py-3"
@@ -269,7 +269,7 @@ export default function AIGamePage() {
 
                             {/* Chessboard */}
                             <div className="flex justify-center">
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, delay: 0.4 }}
@@ -297,7 +297,7 @@ export default function AIGamePage() {
                     {/* Side Panel */}
                     <div className="space-y-6">
                         {/* Difficulty Settings */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.3 }}
@@ -310,7 +310,21 @@ export default function AIGamePage() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-300 font-medium">Level {difficulty}</span>
                                     <span className="text-sm px-3 py-1 rounded-full bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-400/30 text-blue-300">
-                                        {difficulty <= 3 ? 'Beginner' : difficulty <= 6 ? 'Intermediate' : difficulty <= 8 ? 'Advanced' : 'Grandmaster'}
+                                        {(() => {
+                                            const eloMappings = {
+                                                1: '800 ELO',
+                                                2: '1000 ELO', 
+                                                3: '1200 ELO',
+                                                4: '1400 ELO',
+                                                5: '1600 ELO',
+                                                6: '1800 ELO',
+                                                7: '2000 ELO',
+                                                8: '2200 ELO',
+                                                9: '2400 ELO',
+                                                10: '2600 ELO'
+                                            };
+                                            return eloMappings[difficulty as keyof typeof eloMappings] || '1500 ELO';
+                                        })()}
                                     </span>
                                 </div>
                                 <div className="relative">
@@ -333,7 +347,7 @@ export default function AIGamePage() {
                         </motion.div>
 
                         {/* Game Stats */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.4 }}
@@ -370,7 +384,7 @@ export default function AIGamePage() {
                         </motion.div>
 
                         {/* Game Controls */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.5 }}

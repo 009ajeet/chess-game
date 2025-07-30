@@ -158,42 +158,30 @@ class StockfishWrapper {
 
     private generateMockMove(goCommand: string): string {
         try {
-            // Parse the current position and generate legal moves
             const chess = new Chess();
-
             console.log('Current position command:', this.currentPosition);
-            console.log('Go command:', goCommand);
 
-            // Reset to ensure clean state
+            // Set up the board position
             chess.reset();
-
-            // Extract FEN from position command if available
             if (this.currentPosition.includes('fen')) {
                 const fenMatch = this.currentPosition.match(/fen\s+(.+)/);
                 if (fenMatch && fenMatch[1]) {
                     try {
-                        // Remove any trailing commands (like moves)
                         const fenOnly = fenMatch[1].split(' moves')[0].trim();
                         chess.load(fenOnly);
-                        console.log('Loaded FEN position:', fenOnly);
                     } catch (e) {
                         console.warn('Invalid FEN, using startpos:', e);
                         chess.reset();
                     }
                 }
             } else if (this.currentPosition.includes('moves')) {
-                // Apply moves from startpos
                 const movesMatch = this.currentPosition.match(/moves\s+(.+)/);
                 if (movesMatch) {
                     const moves = movesMatch[1].split(' ').filter(m => m.trim());
-                    console.log('Applying moves from startpos:', moves);
                     for (const move of moves) {
                         try {
                             const result = chess.move(move);
-                            if (!result) {
-                                console.warn('Failed to apply move:', move);
-                                break;
-                            }
+                            if (!result) break;
                         } catch (e) {
                             console.warn('Error applying move:', move, e);
                             break;
@@ -202,151 +190,271 @@ class StockfishWrapper {
                 }
             }
 
-            console.log('Current board state:', chess.fen());
-            console.log('Turn:', chess.turn());
-
-            // Get all legal moves
             const legalMoves = chess.moves({ verbose: true });
-
             if (legalMoves.length === 0) {
-                console.warn('No legal moves available');
                 return 'e2e4'; // Fallback
             }
 
-            // Debug: Log all legal moves to see what chess.js is returning
-            console.log('All legal moves:', legalMoves.map(m => `${m.from}->${m.to}${m.promotion ? '=' + m.promotion : ''} (${m.piece})`));
-
-            // Filter out any invalid moves (same square, missing data, etc.)
-            const validMoves = legalMoves.filter(move => {
-                // Check for basic validity
-                const hasValidSquares = move.from && move.to && typeof move.from === 'string' && typeof move.to === 'string';
-                const differentSquares = move.from !== move.to;
-                const validLength = move.from.length === 2 && move.to.length === 2;
-
-                const isValid = hasValidSquares && differentSquares && validLength;
-
-                if (!isValid) {
-                    console.warn('Filtering out invalid move:', {
-                        move,
-                        hasValidSquares,
-                        differentSquares,
-                        validLength,
-                        from: move.from,
-                        to: move.to
-                    });
-                }
-                return isValid;
-            });
-
-            if (validMoves.length === 0) {
-                console.error('No valid moves after filtering, using fallback');
-                return 'e2e4';
-            }
-
-            // Simple strategy: prefer center control, then random
-            const centerMoves = validMoves.filter(move =>
-                ['e4', 'e5', 'd4', 'd5'].includes(move.to) ||
-                ['e2', 'e7', 'd2', 'd7'].includes(move.from)
-            );
-
-            let selectedMove;
-            if (centerMoves.length > 0 && Math.random() > 0.4) {
-                selectedMove = centerMoves[Math.floor(Math.random() * centerMoves.length)];
-            } else {
-                selectedMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-            }
-
-            // Double-check the selected move
-            if (!selectedMove || selectedMove.from === selectedMove.to || !selectedMove.from || !selectedMove.to) {
-                console.error('Selected move is still invalid:', selectedMove);
-                // Use the first valid move as emergency fallback
-                selectedMove = validMoves[0];
-                if (!selectedMove) {
-                    console.error('No valid moves available at all, using hard fallback');
-                    return 'e2e4';
-                }
-            }
-
-            // Build move string with proper promotion handling
+            // Get the selected move based on skill level
+            const selectedMove = this.selectMoveBySkill(chess, legalMoves);
+            
+            // Build move string
             let moveString = selectedMove.from + selectedMove.to;
-
-            // Only add promotion if it's actually a promotion move
             if (selectedMove.promotion) {
-                // Check if this is actually a valid promotion move
                 const fromRank = parseInt(selectedMove.from[1]);
                 const toRank = parseInt(selectedMove.to[1]);
                 const piece = selectedMove.piece;
-
-                // Valid promotion: pawn moving to rank 8 (white) or rank 1 (black)
+                
                 if (piece === 'p' && (toRank === 8 || toRank === 1)) {
                     moveString += selectedMove.promotion;
-                    console.log('Valid promotion move:', moveString);
-                } else {
-                    console.warn('Invalid promotion detected and removed:', selectedMove);
-                    // Don't add promotion for non-promotion moves
                 }
             }
 
-            console.log('Generated valid move:', moveString, 'from', selectedMove.from, 'to', selectedMove.to);
-
-            // Final validation before returning
-            if (moveString.length < 4 || moveString.substring(0, 2) === moveString.substring(2, 4)) {
-                console.error('Final validation failed - same square move detected:', moveString);
-                // Emergency fallback to a known safe move
-                const emergencyMoves = ['e2e4', 'd2d4', 'g1f3', 'b1c3', 'e2e3', 'd2d3'];
-                for (const emergency of emergencyMoves) {
-                    try {
-                        const testChess = new Chess();
-                        testChess.load(chess.fen());
-                        if (testChess.move(emergency)) {
-                            console.log('Using emergency move:', emergency);
-                            return emergency;
-                        }
-                    } catch (e) {
-                        continue;
-                    }
-                }
-                return 'e2e4'; // Ultimate fallback
-            }
-
+            console.log(`Level ${this.currentSkillLevel} (${this.currentEloRating} ELO) selected:`, moveString);
             return moveString;
 
         } catch (error) {
             console.error('Error generating mock move:', error);
-            // Simple fallback moves based on game state
             const fallbackMoves = ['e2e4', 'd2d4', 'g1f3', 'b1c3'];
             return fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
         }
     }
 
-    setSkillLevel(level: number): void {
-        if (!this.engine || !this.isReady) return;
-
-        // Map 1-10 difficulty to custom rating system
-        // Level 1: 400, Level 2: 800, Level 3: 1100, Level 4: 1300, Level 5: 1500, etc.
-        let eloRating: number;
-        switch (level) {
-            case 1: eloRating = 400; break;
-            case 2: eloRating = 800; break;
-            case 3: eloRating = 1100; break;
-            case 4: eloRating = 1300; break;
-            case 5: eloRating = 1500; break;
-            case 6: eloRating = 1700; break;
-            case 7: eloRating = 1900; break;
-            case 8: eloRating = 2100; break;
-            case 9: eloRating = 2300; break;
-            case 10: eloRating = 2500; break;
-            default: eloRating = 1500; break;
+    private selectMoveBySkill(chess: Chess, legalMoves: any[]): any {
+        const elo = this.currentEloRating;
+        
+        // Beginner level (800-1000): Often makes blunders, random moves
+        if (elo <= 1000) {
+            // 30% chance of random move (blunder simulation)
+            if (Math.random() < 0.3) {
+                return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            }
+            // Otherwise prefer simple development or captures
+            const captures = legalMoves.filter(move => move.captured);
+            const development = legalMoves.filter(move => 
+                ['n', 'b'].includes(move.piece) && 
+                ['1', '8'].includes(move.from[1])
+            );
+            
+            if (captures.length > 0 && Math.random() < 0.7) {
+                return captures[Math.floor(Math.random() * captures.length)];
+            }
+            if (development.length > 0 && Math.random() < 0.5) {
+                return development[Math.floor(Math.random() * development.length)];
+            }
+            return legalMoves[Math.floor(Math.random() * legalMoves.length)];
         }
 
-        // Map rating to Stockfish skill levels (0-20)
-        const skillLevel = Math.min(20, Math.max(0, Math.floor((eloRating - 400) / 100)));
+        // Novice level (1000-1200): Basic tactics, some positional understanding
+        if (elo <= 1200) {
+            // Prioritize captures and checks
+            const captures = legalMoves.filter(move => move.captured);
+            const checks = legalMoves.filter(move => {
+                const tempChess = new Chess(chess.fen());
+                tempChess.move(move);
+                return tempChess.inCheck();
+            });
+            
+            // 15% chance of suboptimal move
+            if (Math.random() < 0.15) {
+                return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            }
+            
+            if (checks.length > 0 && Math.random() < 0.6) {
+                return checks[Math.floor(Math.random() * checks.length)];
+            }
+            if (captures.length > 0 && Math.random() < 0.8) {
+                return captures[Math.floor(Math.random() * captures.length)];
+            }
+            
+            // Center control for opening
+            if (chess.history().length < 10) {
+                const centerMoves = legalMoves.filter(move =>
+                    ['e4', 'e5', 'd4', 'd5', 'c4', 'c5', 'f4', 'f5'].includes(move.to)
+                );
+                if (centerMoves.length > 0) {
+                    return centerMoves[Math.floor(Math.random() * centerMoves.length)];
+                }
+            }
+            
+            return this.getRandomGoodMove(legalMoves);
+        }
 
-        this.engine.postMessage(`setoption name Skill Level value ${skillLevel}`);
-        this.engine.postMessage(`setoption name UCI_LimitStrength value true`);
-        this.engine.postMessage(`setoption name UCI_Elo value ${eloRating}`);
+        // Club level (1200-1400): Good basics, occasional tactical errors
+        if (elo <= 1400) {
+            // 10% chance of mistake
+            if (Math.random() < 0.1) {
+                return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            }
+            
+            return this.selectTacticalMove(chess, legalMoves) || this.getPositionalMove(chess, legalMoves);
+        }
 
-        console.log(`Set difficulty level ${level} (ELO: ${eloRating}, Skill: ${skillLevel})`);
+        // Intermediate (1400-1600): Solid tactical play
+        if (elo <= 1600) {
+            // 7% chance of suboptimal move
+            if (Math.random() < 0.07) {
+                return this.getRandomGoodMove(legalMoves);
+            }
+            
+            return this.selectTacticalMove(chess, legalMoves) || this.getPositionalMove(chess, legalMoves);
+        }
+
+        // Advanced (1600-1800): Strong tactical and positional play
+        if (elo <= 1800) {
+            // 5% chance of slightly suboptimal move
+            if (Math.random() < 0.05) {
+                return this.getRandomGoodMove(legalMoves);
+            }
+            
+            return this.selectAdvancedMove(chess, legalMoves);
+        }
+
+        // Expert+ (1800+): Very strong play, rare errors
+        // 2-3% chance of suboptimal move for 1800-2000
+        // 1% chance for 2000+
+        const errorRate = elo <= 2000 ? 0.03 : 0.01;
+        if (Math.random() < errorRate) {
+            return this.getRandomGoodMove(legalMoves);
+        }
+        
+        return this.selectAdvancedMove(chess, legalMoves);
+    }
+
+    private selectTacticalMove(chess: Chess, legalMoves: any[]): any {
+        // Look for tactical opportunities: captures, checks, threats
+        const captures = legalMoves.filter(move => move.captured);
+        const checks = legalMoves.filter(move => {
+            const tempChess = new Chess(chess.fen());
+            tempChess.move(move);
+            return tempChess.inCheck();
+        });
+        
+        // Prefer valuable captures
+        if (captures.length > 0) {
+            const pieceValues = { 'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0 };
+            captures.sort((a, b) => {
+                const aValue = pieceValues[a.captured as keyof typeof pieceValues] || 0;
+                const bValue = pieceValues[b.captured as keyof typeof pieceValues] || 0;
+                return bValue - aValue;
+            });
+            
+            // Take the best capture 80% of the time
+            if (Math.random() < 0.8) {
+                return captures[0];
+            }
+            return captures[Math.floor(Math.random() * Math.min(3, captures.length))];
+        }
+        
+        // Consider checks
+        if (checks.length > 0 && Math.random() < 0.3) {
+            return checks[Math.floor(Math.random() * checks.length)];
+        }
+        
+        return null;
+    }
+
+    private selectAdvancedMove(chess: Chess, legalMoves: any[]): any {
+        // Advanced move selection with deeper tactical understanding
+        const tacticalMove = this.selectTacticalMove(chess, legalMoves);
+        if (tacticalMove) return tacticalMove;
+        
+        // Advanced positional concepts
+        return this.getPositionalMove(chess, legalMoves);
+    }
+
+    private getPositionalMove(chess: Chess, legalMoves: any[]): any {
+        // Basic positional preferences
+        const gamePhase = this.getGamePhase(chess);
+        
+        if (gamePhase === 'opening') {
+            // Opening principles: develop pieces, control center, castle
+            const development = legalMoves.filter(move => 
+                (['n', 'b'].includes(move.piece) && ['1', '8'].includes(move.from[1])) ||
+                (['e4', 'e5', 'd4', 'd5', 'c4', 'c5'].includes(move.to))
+            );
+            
+            // Check for castling moves
+            const castlingMoves = legalMoves.filter(move => 
+                move.flags?.includes('k') || move.flags?.includes('q')
+            );
+            
+            if (castlingMoves.length > 0) {
+                return castlingMoves[0];
+            }
+            
+            if (development.length > 0) {
+                return development[Math.floor(Math.random() * development.length)];
+            }
+        }
+        
+        return this.getRandomGoodMove(legalMoves);
+    }
+
+    private getRandomGoodMove(legalMoves: any[]): any {
+        // Filter out obviously bad moves (moving into attacks, etc.)
+        const saferMoves = legalMoves.filter(move => {
+            // Basic safety check - don't move high-value pieces to attacked squares
+            if (['q', 'r'].includes(move.piece)) {
+                // This is a simplified check - in real implementation we'd check if square is attacked
+                return Math.random() < 0.8; // 80% chance to avoid risky moves
+            }
+            return true;
+        });
+        
+        const movesToConsider = saferMoves.length > 0 ? saferMoves : legalMoves;
+        return movesToConsider[Math.floor(Math.random() * movesToConsider.length)];
+    }
+
+    private getGamePhase(chess: Chess): 'opening' | 'middlegame' | 'endgame' {
+        const moveCount = chess.history().length;
+        if (moveCount < 20) return 'opening';
+        
+        // Count pieces to determine phase
+        const fen = chess.fen();
+        const pieces = fen.split(' ')[0];
+        const majorPieces = (pieces.match(/[QRqr]/g) || []).length;
+        
+        if (majorPieces <= 4) return 'endgame';
+        return 'middlegame';
+    }
+
+    private currentSkillLevel: number = 5;
+    private currentEloRating: number = 1500;
+
+    setSkillLevel(level: number): void {
+        this.currentSkillLevel = level;
+        
+        // Realistic ELO mapping for 10 difficulty levels
+        const eloMappings = {
+            1: 800,   // Beginner - makes many blunders
+            2: 1000,  // Novice - basic tactics, some blunders  
+            3: 1200,  // Club player - decent opening, occasional mistakes
+            4: 1400,  // Intermediate - solid basics, some tactical errors
+            5: 1600,  // Advanced amateur - good tactics, positional understanding
+            6: 1800,  // Expert - strong tactical play, fewer mistakes
+            7: 2000,  // Class A - advanced tactics, good strategy
+            8: 2200,  // Master level - excellent play, rare errors
+            9: 2400,  // International Master strength 
+            10: 2600  // Grandmaster level - near perfect play
+        };
+
+        this.currentEloRating = eloMappings[level as keyof typeof eloMappings] || 1500;
+        const stockfishSkill = Math.min(20, Math.max(0, Math.floor((this.currentEloRating - 800) / 90)));
+
+        if (this.engine && this.isReady) {
+            // Configure Stockfish for realistic strength
+            this.engine.postMessage(`setoption name Skill Level value ${stockfishSkill}`);
+            this.engine.postMessage(`setoption name UCI_LimitStrength value true`);
+            this.engine.postMessage(`setoption name UCI_Elo value ${this.currentEloRating}`);
+            
+            // Add some randomness for lower levels to simulate human-like errors
+            if (this.currentEloRating < 1600) {
+                this.engine.postMessage(`setoption name MultiPV value 3`);
+            }
+        }
+
+        console.log(`Set difficulty level ${level} (ELO: ${this.currentEloRating}, Stockfish Skill: ${stockfishSkill})`);
     }
 
     analyzePosition(fen: string, depth = 15, onEvaluation?: (evaluation: EngineEvaluation) => void): void {
