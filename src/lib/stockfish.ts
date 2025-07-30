@@ -197,14 +197,14 @@ class StockfishWrapper {
 
             // Get the selected move based on skill level
             const selectedMove = this.selectMoveBySkill(chess, legalMoves);
-            
+
             // Build move string
             let moveString = selectedMove.from + selectedMove.to;
             if (selectedMove.promotion) {
                 const fromRank = parseInt(selectedMove.from[1]);
                 const toRank = parseInt(selectedMove.to[1]);
                 const piece = selectedMove.piece;
-                
+
                 if (piece === 'p' && (toRank === 8 || toRank === 1)) {
                     moveString += selectedMove.promotion;
                 }
@@ -222,201 +222,352 @@ class StockfishWrapper {
 
     private selectMoveBySkill(chess: Chess, legalMoves: any[]): any {
         const elo = this.currentEloRating;
+        console.log(`Selecting move for ELO ${elo} with ${legalMoves.length} legal moves`);
+
+        // Calculate move scores and select based on skill level
+        const moveScores = this.evaluateAllMoves(chess, legalMoves);
         
-        // Beginner level (800-1000): Often makes blunders, random moves
+        // Beginner level (800-1000): Frequent blunders, basic pattern recognition
         if (elo <= 1000) {
-            // 30% chance of random move (blunder simulation)
-            if (Math.random() < 0.3) {
+            // 25% chance of completely random move (major blunder)
+            if (Math.random() < 0.25) {
+                console.log('Beginner making random blunder');
                 return legalMoves[Math.floor(Math.random() * legalMoves.length)];
             }
-            // Otherwise prefer simple development or captures
-            const captures = legalMoves.filter(move => move.captured);
-            const development = legalMoves.filter(move => 
-                ['n', 'b'].includes(move.piece) && 
-                ['1', '8'].includes(move.from[1])
-            );
             
-            if (captures.length > 0 && Math.random() < 0.7) {
-                return captures[Math.floor(Math.random() * captures.length)];
+            // 40% chance of sub-optimal move
+            if (Math.random() < 0.4) {
+                const randomSelection = moveScores.slice(Math.floor(moveScores.length * 0.3));
+                return randomSelection[Math.floor(Math.random() * randomSelection.length)].move;
             }
-            if (development.length > 0 && Math.random() < 0.5) {
-                return development[Math.floor(Math.random() * development.length)];
-            }
-            return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            
+            // Otherwise try to make a decent move
+            return this.selectFromTopMoves(moveScores, 0.6);
         }
 
-        // Novice level (1000-1200): Basic tactics, some positional understanding
+        // Novice level (1000-1200): Some tactics, misses opportunities
         if (elo <= 1200) {
-            // Prioritize captures and checks
-            const captures = legalMoves.filter(move => move.captured);
-            const checks = legalMoves.filter(move => {
-                const tempChess = new Chess(chess.fen());
-                tempChess.move(move);
-                return tempChess.inCheck();
-            });
-            
-            // 15% chance of suboptimal move
+            // 15% chance of poor move
             if (Math.random() < 0.15) {
-                return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+                console.log('Novice making suboptimal move');
+                const poorMoves = moveScores.slice(Math.floor(moveScores.length * 0.4));
+                return poorMoves[Math.floor(Math.random() * poorMoves.length)].move;
             }
             
-            if (checks.length > 0 && Math.random() < 0.6) {
-                return checks[Math.floor(Math.random() * checks.length)];
-            }
-            if (captures.length > 0 && Math.random() < 0.8) {
-                return captures[Math.floor(Math.random() * captures.length)];
-            }
-            
-            // Center control for opening
-            if (chess.history().length < 10) {
-                const centerMoves = legalMoves.filter(move =>
-                    ['e4', 'e5', 'd4', 'd5', 'c4', 'c5', 'f4', 'f5'].includes(move.to)
-                );
-                if (centerMoves.length > 0) {
-                    return centerMoves[Math.floor(Math.random() * centerMoves.length)];
-                }
-            }
-            
-            return this.getRandomGoodMove(legalMoves);
+            // Usually plays decent moves
+            return this.selectFromTopMoves(moveScores, 0.75);
         }
 
-        // Club level (1200-1400): Good basics, occasional tactical errors
+        // Club level (1200-1400): Good basics, occasional tactical oversights
         if (elo <= 1400) {
-            // 10% chance of mistake
-            if (Math.random() < 0.1) {
-                return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            // 8% chance of mistake
+            if (Math.random() < 0.08) {
+                console.log('Club player making mistake');
+                const weakMoves = moveScores.slice(Math.floor(moveScores.length * 0.3));
+                return weakMoves[Math.floor(Math.random() * Math.min(5, weakMoves.length))].move;
             }
             
-            return this.selectTacticalMove(chess, legalMoves) || this.getPositionalMove(chess, legalMoves);
+            return this.selectFromTopMoves(moveScores, 0.85);
         }
 
-        // Intermediate (1400-1600): Solid tactical play
+        // Intermediate (1400-1600): Solid tactical play, good positional sense
         if (elo <= 1600) {
-            // 7% chance of suboptimal move
-            if (Math.random() < 0.07) {
-                return this.getRandomGoodMove(legalMoves);
+            // 5% chance of suboptimal move
+            if (Math.random() < 0.05) {
+                return this.selectFromTopMoves(moveScores, 0.8);
             }
             
-            return this.selectTacticalMove(chess, legalMoves) || this.getPositionalMove(chess, legalMoves);
+            return this.selectFromTopMoves(moveScores, 0.92);
         }
 
         // Advanced (1600-1800): Strong tactical and positional play
         if (elo <= 1800) {
-            // 5% chance of slightly suboptimal move
-            if (Math.random() < 0.05) {
-                return this.getRandomGoodMove(legalMoves);
+            // 3% chance of slightly suboptimal move
+            if (Math.random() < 0.03) {
+                return this.selectFromTopMoves(moveScores, 0.9);
             }
             
-            return this.selectAdvancedMove(chess, legalMoves);
+            return this.selectFromTopMoves(moveScores, 0.95);
         }
 
         // Expert+ (1800+): Very strong play, rare errors
-        // 2-3% chance of suboptimal move for 1800-2000
-        // 1% chance for 2000+
-        const errorRate = elo <= 2000 ? 0.03 : 0.01;
+        const errorRate = elo <= 2000 ? 0.02 : elo <= 2200 ? 0.015 : 0.01;
         if (Math.random() < errorRate) {
-            return this.getRandomGoodMove(legalMoves);
+            console.log(`Expert level making rare error (${errorRate * 100}% chance)`);
+            return this.selectFromTopMoves(moveScores, 0.92);
         }
-        
-        return this.selectAdvancedMove(chess, legalMoves);
+
+        // Almost always plays the best moves
+        return this.selectFromTopMoves(moveScores, 0.98);
     }
 
-    private selectTacticalMove(chess: Chess, legalMoves: any[]): any {
-        // Look for tactical opportunities: captures, checks, threats
-        const captures = legalMoves.filter(move => move.captured);
-        const checks = legalMoves.filter(move => {
-            const tempChess = new Chess(chess.fen());
-            tempChess.move(move);
-            return tempChess.inCheck();
+    private evaluateAllMoves(chess: Chess, legalMoves: any[]): Array<{move: any, score: number}> {
+        const moveScores = legalMoves.map(move => ({
+            move,
+            score: this.evaluateMove(chess, move)
+        }));
+
+        // Sort by score (higher is better)
+        moveScores.sort((a, b) => b.score - a.score);
+        
+        console.log(`Top 3 moves:`, moveScores.slice(0, 3).map(m => `${m.move.from}${m.move.to} (${m.score.toFixed(1)})`));
+        return moveScores;
+    }
+
+    private evaluateMove(chess: Chess, move: any): number {
+        let score = 0;
+        const pieceValues = { 'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0 };
+        const elo = this.currentEloRating;
+
+        // Make the move on a copy to evaluate
+        const tempChess = new Chess(chess.fen());
+        const madeMove = tempChess.move(move);
+        if (!madeMove) return -1000;
+
+        // Material gain/loss
+        if (move.captured) {
+            score += (pieceValues[move.captured as keyof typeof pieceValues] || 0) * 100;
+            console.log(`Capture: +${(pieceValues[move.captured as keyof typeof pieceValues] || 0) * 100}`);
+        }
+
+        // Promotion
+        if (move.promotion) {
+            score += (pieceValues[move.promotion as keyof typeof pieceValues] || 0) * 80;
+        }
+
+        // Check/checkmate
+        if (tempChess.inCheckmate()) {
+            score += 10000;
+        } else if (tempChess.inCheck()) {
+            score += 50;
+        }
+
+        // Castling (safety)
+        if (move.flags && (move.flags.includes('k') || move.flags.includes('q'))) {
+            score += 80;
+        }
+
+        // Center control (important for all levels)
+        const centerSquares = ['e4', 'e5', 'd4', 'd5'];
+        const nearCenterSquares = ['c3', 'c4', 'c5', 'c6', 'f3', 'f4', 'f5', 'f6'];
+        
+        if (centerSquares.includes(move.to)) {
+            score += 30;
+        } else if (nearCenterSquares.includes(move.to)) {
+            score += 15;
+        }
+
+        // Development in opening (first 10 moves)
+        if (chess.history().length < 20) {
+            if (['n', 'b'].includes(move.piece) && ['1', '8'].includes(move.from[1])) {
+                score += 40; // Developing pieces
+            }
+            
+            // Avoid moving same piece twice
+            if (this.hasMovedPieceBefore(chess, move.piece, move.from)) {
+                score -= 20;
+            }
+        }
+
+        // Advanced positional factors (higher ELO only)
+        if (elo > 1400) {
+            score += this.evaluateAdvancedPositions(chess, tempChess, move);
+        }
+
+        // Tactical patterns (ELO 1200+)
+        if (elo > 1200) {
+            score += this.evaluateTacticalPatterns(chess, tempChess, move);
+        }
+
+        // King safety considerations
+        score += this.evaluateKingSafety(tempChess, move);
+
+        // Avoid moving into threats (basic safety)
+        if (this.isSquareAttacked(tempChess, move.to, chess.turn() === 'w' ? 'b' : 'w')) {
+            const pieceValue = pieceValues[move.piece as keyof typeof pieceValues] || 0;
+            score -= pieceValue * 30; // Penalty for moving into attack
+        }
+
+        return score;
+    }
+
+    private selectFromTopMoves(moveScores: Array<{move: any, score: number}>, percentile: number): any {
+        const topCount = Math.max(1, Math.floor(moveScores.length * percentile));
+        const topMoves = moveScores.slice(0, topCount);
+        
+        // Add some randomness even among top moves
+        const weights = topMoves.map((_, index) => Math.pow(0.8, index));
+        const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+        
+        let random = Math.random() * totalWeight;
+        for (let i = 0; i < topMoves.length; i++) {
+            random -= weights[i];
+            if (random <= 0) {
+                console.log(`Selected move ${i + 1} of top ${topCount}: ${topMoves[i].move.from}${topMoves[i].move.to} (score: ${topMoves[i].score.toFixed(1)})`);
+                return topMoves[i].move;
+            }
+        }
+        
+        return topMoves[0].move;
+    }
+
+    private evaluateAdvancedPositions(originalChess: Chess, afterMove: Chess, move: any): number {
+        let score = 0;
+
+        // Piece activity and mobility
+        const ourMoves = afterMove.moves().length;
+        const opponentColor = afterMove.turn();
+        afterMove.load(afterMove.fen().replace(` ${opponentColor} `, ` ${opponentColor === 'w' ? 'b' : 'w'} `));
+        const opponentMoves = afterMove.moves().length;
+        
+        score += (ourMoves - opponentMoves) * 2; // Mobility advantage
+
+        // Pawn structure
+        score += this.evaluatePawnStructure(afterMove);
+
+        // Piece coordination
+        score += this.evaluatePieceCoordination(afterMove, move);
+
+        return score;
+    }
+
+    private evaluateTacticalPatterns(chess: Chess, tempChess: Chess, move: any): number {
+        let score = 0;
+
+        // Look for forks, pins, skewers
+        score += this.findTacticalMotifs(tempChess, move);
+
+        // Discovered attacks
+        if (this.createsDiscoveredAttack(chess, move)) {
+            score += 60;
+        }
+
+        // Double attacks
+        if (this.createsDoubleAttack(tempChess, move)) {
+            score += 50;
+        }
+
+        return score;
+    }
+
+    private evaluateKingSafety(chess: Chess, move: any): number {
+        let score = 0;
+        
+        // Penalty for exposing king
+        if (move.piece === 'k') {
+            const kingFile = move.to[0];
+            const kingRank = parseInt(move.to[1]);
+            
+            // Avoid moving king to center early
+            if (chess.history().length < 30 && ['d', 'e'].includes(kingFile) && [3, 4, 5, 6].includes(kingRank)) {
+                score -= 40;
+            }
+        }
+
+        return score;
+    }
+
+    // Helper methods for advanced evaluation
+    private hasMovedPieceBefore(chess: Chess, piece: string, square: string): boolean {
+        const history = chess.history({ verbose: true });
+        return history.some(move => move.piece === piece && move.from === square);
+    }
+
+    private isSquareAttacked(chess: Chess, square: string, byColor: string): boolean {
+        // Simple check - in real implementation would be more sophisticated
+        const tempChess = new Chess(chess.fen());
+        const originalTurn = tempChess.turn();
+        
+        // Switch turn to check if square is attacked
+        const fen = tempChess.fen().replace(` ${originalTurn} `, ` ${byColor} `);
+        try {
+            tempChess.load(fen);
+            const moves = tempChess.moves({ verbose: true });
+            return moves.some(move => move.to === square);
+        } catch {
+            return false;
+        }
+    }
+
+    private evaluatePawnStructure(chess: Chess): number {
+        // Basic pawn structure evaluation
+        let score = 0;
+        const board = chess.board();
+        
+        // Count doubled pawns, isolated pawns, etc.
+        // This is a simplified version
+        for (let file = 0; file < 8; file++) {
+            let whitePawns = 0, blackPawns = 0;
+            for (let rank = 0; rank < 8; rank++) {
+                const piece = board[rank][file];
+                if (piece && piece.type === 'p') {
+                    if (piece.color === 'w') whitePawns++;
+                    else blackPawns++;
+                }
+            }
+            
+            // Penalty for doubled pawns
+            if (whitePawns > 1) score -= (whitePawns - 1) * 10;
+            if (blackPawns > 1) score += (blackPawns - 1) * 10;
+        }
+        
+        return score;
+    }
+
+    private evaluatePieceCoordination(chess: Chess, move: any): number {
+        // Simplified piece coordination evaluation
+        let score = 0;
+        
+        // Bonus for pieces supporting each other
+        const defenders = this.countDefenders(chess, move.to);
+        score += defenders * 5;
+        
+        return score;
+    }
+
+    private findTacticalMotifs(chess: Chess, move: any): number {
+        let score = 0;
+        
+        // Check for forks (attacking multiple pieces)
+        const attacks = this.getAttackedSquares(chess, move.to, chess.turn());
+        const valuableTargets = attacks.filter(square => {
+            const piece = chess.get(square);
+            return piece && piece.color !== chess.turn() && ['r', 'q', 'k'].includes(piece.type);
         });
         
-        // Prefer valuable captures
-        if (captures.length > 0) {
-            const pieceValues = { 'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0 };
-            captures.sort((a, b) => {
-                const aValue = pieceValues[a.captured as keyof typeof pieceValues] || 0;
-                const bValue = pieceValues[b.captured as keyof typeof pieceValues] || 0;
-                return bValue - aValue;
-            });
-            
-            // Take the best capture 80% of the time
-            if (Math.random() < 0.8) {
-                return captures[0];
-            }
-            return captures[Math.floor(Math.random() * Math.min(3, captures.length))];
+        if (valuableTargets.length > 1) {
+            score += 80; // Fork bonus
         }
         
-        // Consider checks
-        if (checks.length > 0 && Math.random() < 0.3) {
-            return checks[Math.floor(Math.random() * checks.length)];
-        }
-        
-        return null;
+        return score;
     }
 
-    private selectAdvancedMove(chess: Chess, legalMoves: any[]): any {
-        // Advanced move selection with deeper tactical understanding
-        const tacticalMove = this.selectTacticalMove(chess, legalMoves);
-        if (tacticalMove) return tacticalMove;
-        
-        // Advanced positional concepts
-        return this.getPositionalMove(chess, legalMoves);
+    private createsDiscoveredAttack(chess: Chess, move: any): boolean {
+        // Simplified discovered attack detection
+        return false; // Would need more complex implementation
     }
 
-    private getPositionalMove(chess: Chess, legalMoves: any[]): any {
-        // Basic positional preferences
-        const gamePhase = this.getGamePhase(chess);
-        
-        if (gamePhase === 'opening') {
-            // Opening principles: develop pieces, control center, castle
-            const development = legalMoves.filter(move => 
-                (['n', 'b'].includes(move.piece) && ['1', '8'].includes(move.from[1])) ||
-                (['e4', 'e5', 'd4', 'd5', 'c4', 'c5'].includes(move.to))
-            );
-            
-            // Check for castling moves
-            const castlingMoves = legalMoves.filter(move => 
-                move.flags?.includes('k') || move.flags?.includes('q')
-            );
-            
-            if (castlingMoves.length > 0) {
-                return castlingMoves[0];
-            }
-            
-            if (development.length > 0) {
-                return development[Math.floor(Math.random() * development.length)];
-            }
-        }
-        
-        return this.getRandomGoodMove(legalMoves);
+    private createsDoubleAttack(chess: Chess, move: any): boolean {
+        // Simplified double attack detection
+        return false; // Would need more complex implementation
     }
 
-    private getRandomGoodMove(legalMoves: any[]): any {
-        // Filter out obviously bad moves (moving into attacks, etc.)
-        const saferMoves = legalMoves.filter(move => {
-            // Basic safety check - don't move high-value pieces to attacked squares
-            if (['q', 'r'].includes(move.piece)) {
-                // This is a simplified check - in real implementation we'd check if square is attacked
-                return Math.random() < 0.8; // 80% chance to avoid risky moves
-            }
-            return true;
+    private countDefenders(chess: Chess, square: string): number {
+        // Count pieces defending a square
+        let count = 0;
+        const moves = chess.moves({ verbose: true });
+        
+        moves.forEach(move => {
+            if (move.to === square) count++;
         });
         
-        const movesToConsider = saferMoves.length > 0 ? saferMoves : legalMoves;
-        return movesToConsider[Math.floor(Math.random() * movesToConsider.length)];
+        return count;
     }
 
-    private getGamePhase(chess: Chess): 'opening' | 'middlegame' | 'endgame' {
-        const moveCount = chess.history().length;
-        if (moveCount < 20) return 'opening';
-        
-        // Count pieces to determine phase
-        const fen = chess.fen();
-        const pieces = fen.split(' ')[0];
-        const majorPieces = (pieces.match(/[QRqr]/g) || []).length;
-        
-        if (majorPieces <= 4) return 'endgame';
-        return 'middlegame';
+    private getAttackedSquares(chess: Chess, fromSquare: string, color: string): string[] {
+        // Get all squares attacked by a piece on fromSquare
+        const moves = chess.moves({ verbose: true, square: fromSquare });
+        return moves.map(move => move.to);
     }
 
     private currentSkillLevel: number = 5;
@@ -424,7 +575,7 @@ class StockfishWrapper {
 
     setSkillLevel(level: number): void {
         this.currentSkillLevel = level;
-        
+
         // Realistic ELO mapping for 10 difficulty levels
         const eloMappings = {
             1: 800,   // Beginner - makes many blunders
@@ -447,7 +598,7 @@ class StockfishWrapper {
             this.engine.postMessage(`setoption name Skill Level value ${stockfishSkill}`);
             this.engine.postMessage(`setoption name UCI_LimitStrength value true`);
             this.engine.postMessage(`setoption name UCI_Elo value ${this.currentEloRating}`);
-            
+
             // Add some randomness for lower levels to simulate human-like errors
             if (this.currentEloRating < 1600) {
                 this.engine.postMessage(`setoption name MultiPV value 3`);

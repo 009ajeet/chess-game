@@ -313,7 +313,7 @@ export default function AIGamePage() {
                                         {(() => {
                                             const eloMappings = {
                                                 1: '800 ELO',
-                                                2: '1000 ELO', 
+                                                2: '1000 ELO',
                                                 3: '1200 ELO',
                                                 4: '1400 ELO',
                                                 5: '1600 ELO',
