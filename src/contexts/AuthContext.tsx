@@ -58,10 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: 'demo@example.com',
                 username: 'Demo Player',
                 displayName: 'Demo Player',
-                photoURL: null,
-                rating: 1200,
+                elo: 1200,
                 gamesPlayed: 0,
                 gamesWon: 0,
+                gamesLost: 0,
+                gamesDrawn: 0,
                 createdAt: new Date(),
                 lastActive: new Date(),
             };
