@@ -3,16 +3,17 @@ const nextConfig = {
     // Enable React strict mode for better development experience
     reactStrictMode: true,
 
-    // GitHub Pages configuration
-    output: 'export',
-    trailingSlash: true,
+    // GitHub Pages configuration - only for production
+    ...(process.env.NODE_ENV === 'production' && {
+        output: 'export',
+        trailingSlash: true,
+        basePath: '/chess-game',
+        assetPrefix: '/chess-game/',
+    }),
+
     images: {
         unoptimized: true
     },
-
-    // Base path for GitHub Pages
-    basePath: process.env.NODE_ENV === 'production' ? '/chess-game' : '',
-    assetPrefix: process.env.NODE_ENV === 'production' ? '/chess-game/' : '',
 
     // Disable ESLint during build for deployment
     eslint: {
@@ -22,12 +23,6 @@ const nextConfig = {
     // Disable TypeScript type checking during build for deployment
     typescript: {
         ignoreBuildErrors: true,
-    },
-
-    // Experimental features
-    experimental: {
-        // Helps with hydration issues
-        esmExternals: true,
     },
 
     // Webpack configuration for better handling of external libraries
