@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User } from '@/types/chess';
+import { statsService } from '@/lib/stats';
 
 // Type guard for database
 function assertDbExists(db: any): asserts db is Firestore {
@@ -222,69 +223,16 @@ export class MultiplayerService {
     }
 
     async updatePlayerStats(userId: string, result: 'win' | 'loss' | 'draw', newRating?: number): Promise<void> {
-        assertDbExists(db);
-
         try {
-            const userRef = doc(db, 'users', userId);
-            const userSnap = await getDoc(userRef);
-
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-                const currentStats = {
-                    totalGames: userData.totalGames || 0,
-                    wins: userData.wins || 0,
-                    draws: userData.draws || 0,
-                    losses: userData.losses || 0,
-                    rating: userData.rating || 1200,
-                    highestRating: userData.highestRating || userData.rating || 1200,
-                    currentStreak: userData.currentStreak || 0,
-                    longestWinStreak: userData.longestWinStreak || 0
-                };
-
-                const updates: any = {
-                    totalGames: currentStats.totalGames + 1,
-                    lastGameDate: Timestamp.now()
-                };
-
-                // Update game result stats
-                if (result === 'win') {
-                    updates.wins = currentStats.wins + 1;
-                    updates.currentStreak = currentStats.currentStreak + 1;
-                    updates.longestWinStreak = Math.max(currentStats.longestWinStreak, updates.currentStreak);
-                } else if (result === 'loss') {
-                    updates.losses = currentStats.losses + 1;
-                    updates.currentStreak = 0;
-                } else {
-                    updates.draws = currentStats.draws + 1;
-                    updates.currentStreak = 0;
-                }
-
-                // Update rating if provided
-                if (newRating !== undefined) {
-                    updates.rating = newRating;
-                    updates.highestRating = Math.max(currentStats.highestRating, newRating);
-                }
-
-                await updateDoc(userRef, updates);
-                console.log('Updated player stats for:', userId, result);
-            } else {
-                // Create initial stats if user doesn't exist
-                const initialStats = {
-                    totalGames: 1,
-                    wins: result === 'win' ? 1 : 0,
-                    draws: result === 'draw' ? 1 : 0,
-                    losses: result === 'loss' ? 1 : 0,
-                    rating: newRating || 1200,
-                    highestRating: newRating || 1200,
-                    currentStreak: result === 'win' ? 1 : 0,
-                    longestWinStreak: result === 'win' ? 1 : 0,
-                    joinedDate: Timestamp.now(),
-                    lastGameDate: Timestamp.now()
-                };
-
-                await setDoc(userRef, initialStats, { merge: true });
-                console.log('Created initial stats for:', userId);
-            }
+            // Use the new stats service for consistent tracking
+            await statsService.updateUserStats(
+                userId,
+                'multiplayer',
+                result,
+                newRating ? (newRating - 1200) : undefined, // Calculate rating change from base 1200
+                undefined // Game length not available in multiplayer yet
+            );
+            console.log('Updated player stats for:', userId, result);
         } catch (error) {
             console.error('Error updating player stats:', error);
         }

@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { stockfishEngine } from '@/lib/stockfish';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { statsService } from '@/lib/stats';
+import toast from 'react-hot-toast';
 
 export default function AIGamePage() {
     const { user } = useAuth();
@@ -18,6 +20,8 @@ export default function AIGamePage() {
     const [gameStatus, setGameStatus] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [engineReady, setEngineReady] = useState(false);
+    const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+    const [gameEnded, setGameEnded] = useState(false);
 
     useEffect(() => {
         // Initialize Stockfish
@@ -34,6 +38,7 @@ export default function AIGamePage() {
         };
 
         initEngine();
+        setGameStartTime(new Date()); // Set game start time
 
         return () => {
             stockfishEngine.terminate();
@@ -121,11 +126,51 @@ export default function AIGamePage() {
         }
     }, [isPlayerTurn, makeAIMove, engineReady]);
 
-    const updateGameStatus = () => {
+    const updateGameStatus = async () => {
         if (game.isCheckmate()) {
-            setGameStatus(game.turn() === 'w' ? 'Black wins by checkmate!' : 'White wins by checkmate!');
+            const winner = game.turn() === 'w' ? 'black' : 'white';
+            setGameStatus(winner === 'black' ? 'Black wins by checkmate!' : 'White wins by checkmate!');
+            
+            // Update stats if user is logged in and game hasn't ended yet
+            if (user && !gameEnded && gameStartTime) {
+                setGameEnded(true);
+                const playerWins = winner === 'white'; // Player is white
+                const gameLength = Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000 / 60); // minutes
+                
+                try {
+                    await statsService.updateUserStats(
+                        user.uid,
+                        'ai',
+                        playerWins ? 'win' : 'loss',
+                        undefined, // No rating change for AI games
+                        gameLength
+                    );
+                    toast.success(playerWins ? 'Victory! Stats updated.' : 'Good game! Stats updated.');
+                } catch (error) {
+                    console.error('Error updating stats:', error);
+                }
+            }
         } else if (game.isDraw()) {
             setGameStatus('Game ended in a draw!');
+            
+            // Update stats for draw
+            if (user && !gameEnded && gameStartTime) {
+                setGameEnded(true);
+                const gameLength = Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000 / 60); // minutes
+                
+                try {
+                    await statsService.updateUserStats(
+                        user.uid,
+                        'ai',
+                        'draw',
+                        undefined, // No rating change for AI games
+                        gameLength
+                    );
+                    toast.success('Draw! Stats updated.');
+                } catch (error) {
+                    console.error('Error updating stats:', error);
+                }
+            }
         } else if (game.isCheck()) {
             setGameStatus('Check!');
         } else {
@@ -164,6 +209,8 @@ export default function AIGamePage() {
         setIsPlayerTurn(true);
         setGameStatus('');
         setIsThinking(false);
+        setGameEnded(false);
+        setGameStartTime(new Date());
     };
 
     const goBack = () => {

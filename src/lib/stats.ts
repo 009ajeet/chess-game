@@ -20,7 +20,7 @@ interface UserStats {
 
 export class StatsService {
     async updateUserStats(
-        userId: string, 
+        userId: string,
         gameType: 'ai' | 'multiplayer',
         result: 'win' | 'loss' | 'draw',
         ratingChange?: number,
@@ -36,7 +36,7 @@ export class StatsService {
             const userSnap = await getDoc(userRef);
 
             let currentStats: Partial<UserStats>;
-            
+
             if (userSnap.exists()) {
                 currentStats = userSnap.data() as UserStats;
             } else {
@@ -76,7 +76,7 @@ export class StatsService {
                 updates.wins = (currentStats.wins || 0) + 1;
                 updates.currentStreak = (currentStats.currentStreak || 0) + 1;
                 updates.longestWinStreak = Math.max(
-                    currentStats.longestWinStreak || 0, 
+                    currentStats.longestWinStreak || 0,
                     updates.currentStreak
                 );
             } else if (result === 'loss') {
@@ -148,7 +148,7 @@ export class StatsService {
     calculateRatingChange(playerRating: number, opponentRating: number, result: 'win' | 'loss' | 'draw'): number {
         const K = 32; // K-factor for rating calculation
         const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
-        
+
         let actualScore: number;
         if (result === 'win') actualScore = 1;
         else if (result === 'loss') actualScore = 0;

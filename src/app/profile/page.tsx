@@ -56,6 +56,18 @@ export default function ProfilePage() {
         }
     }, [user]);
 
+    // Auto-refresh stats when page becomes visible
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden && user) {
+                loadUserStats();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [user]);
+
     const loadUserStats = async () => {
         if (!user) return;
 
@@ -71,6 +83,11 @@ export default function ProfilePage() {
         } catch (error) {
             console.error('Error loading user stats:', error);
         }
+    };
+
+    const refreshStats = async () => {
+        await loadUserStats();
+        toast.success('Stats refreshed!');
     };
 
     const updateUsername = async () => {
@@ -189,14 +206,24 @@ export default function ProfilePage() {
                             </h1>
                             <p className="text-gray-300 text-lg">Your chess journey and achievements</p>
                         </div>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => router.push('/')}
-                            className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg border border-white/10"
-                        >
-                            ← Back Home
-                        </motion.button>
+                        <div className="flex gap-3">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={refreshStats}
+                                className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all duration-300 shadow-lg border border-white/10"
+                            >
+                                🔄 Refresh
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => router.push('/')}
+                                className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg border border-white/10"
+                            >
+                                ← Back Home
+                            </motion.button>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -213,7 +240,7 @@ export default function ProfilePage() {
                             <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center text-6xl shadow-2xl">
                                 👤
                             </div>
-                            
+
                             {/* Username */}
                             {isEditing ? (
                                 <div className="space-y-4">
@@ -319,7 +346,7 @@ export default function ProfilePage() {
                             <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
                                 <span className="text-2xl mr-3">📊</span> Game Statistics
                             </h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 {/* Wins */}
                                 <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl p-6 text-center">
