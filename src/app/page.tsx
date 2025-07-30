@@ -83,8 +83,8 @@ export default function Home() {
           <div className="flex items-center">
             <div className="ml-3">
               <p className="text-sm">
-                🎮 <strong>Demo Mode Active</strong> - You're signed in as Demo Player. 
-                All features work, but data won't be saved. 
+                🎮 <strong>Demo Mode Active</strong> - You're signed in as Demo Player.
+                All features work, but data won't be saved.
                 <a href="#" className="underline ml-1">Set up Firebase for real authentication</a>
               </p>
             </div>
