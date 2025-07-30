@@ -6,6 +6,7 @@ import { Chessboard } from 'react-chessboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { stockfishEngine } from '@/lib/stockfish';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function AIGamePage() {
     const { user } = useAuth();
@@ -170,48 +171,111 @@ export default function AIGamePage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+            {/* Animated Background */}
+            <div className="absolute inset-0 overflow-hidden">
+                <motion.div 
+                    animate={{ 
+                        rotate: 360,
+                        scale: [1, 1.1, 1]
+                    }}
+                    transition={{ 
+                        duration: 30,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }}
+                    className="absolute top-1/3 left-1/3 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl"
+                />
+                <motion.div 
+                    animate={{ 
+                        rotate: -360,
+                        scale: [1.1, 1, 1.1]
+                    }}
+                    transition={{ 
+                        duration: 25,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }}
+                    className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"
+                />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto p-6">
                 {/* Header */}
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-6"
+                >
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Play vs AI</h1>
-                            <p className="text-gray-600">Challenge our Stockfish-powered chess engine</p>
+                            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-2">
+                                AI Challenge
+                            </h1>
+                            <p className="text-gray-300">Test your skills against Stockfish-powered AI</p>
                         </div>
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={goBack}
-                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all duration-300 shadow-lg"
                         >
-                            Back to Home
-                        </button>
+                            ← Back Home
+                        </motion.button>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                     {/* Game Board */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <div className="mb-4 text-center">
+                    <div className="xl:col-span-3">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-8"
+                        >
+                            {/* Status Bar */}
+                            <div className="mb-6 text-center">
                                 {isThinking && (
-                                    <div className="text-blue-600 font-medium">
-                                        🤖 AI is thinking...
-                                    </div>
+                                    <motion.div 
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="inline-flex items-center space-x-3 bg-blue-500/20 border border-blue-400/30 rounded-xl px-6 py-3"
+                                    >
+                                        <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse" />
+                                        <span className="text-blue-300 font-medium">AI is calculating...</span>
+                                    </motion.div>
                                 )}
                                 {gameStatus && (
-                                    <div className="text-lg font-bold text-red-600">
-                                        {gameStatus}
-                                    </div>
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="inline-block bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-xl px-6 py-3"
+                                    >
+                                        <span className="text-lg font-bold text-purple-300">{gameStatus}</span>
+                                    </motion.div>
                                 )}
                                 {!engineReady && (
-                                    <div className="text-yellow-600 font-medium">
-                                        ⚙️ Initializing chess engine...
-                                    </div>
+                                    <motion.div 
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="inline-flex items-center space-x-3 bg-yellow-500/20 border border-yellow-400/30 rounded-xl px-6 py-3"
+                                    >
+                                        <div className="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="text-yellow-300 font-medium">Initializing engine...</span>
+                                    </motion.div>
                                 )}
                             </div>
 
+                            {/* Chessboard */}
                             <div className="flex justify-center">
-                                <div style={{ width: '100%', maxWidth: '500px' }}>
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.4 }}
+                                    className="w-full max-w-lg"
+                                    style={{ aspectRatio: '1' }}
+                                >
                                     <Chessboard
                                         options={{
                                             position: gamePosition,
@@ -219,95 +283,129 @@ export default function AIGamePage() {
                                             boardOrientation: "white",
                                             allowDragging: isPlayerTurn && !isThinking && engineReady,
                                             boardStyle: {
-                                                borderRadius: '4px',
-                                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                                borderRadius: '16px',
+                                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                                                border: '2px solid rgba(255, 255, 255, 0.1)',
                                             }
                                         }}
                                     />
-                                </div>
+                                </motion.div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
-                    {/* Game Controls */}
+                    {/* Side Panel */}
                     <div className="space-y-6">
                         {/* Difficulty Settings */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4">Difficulty Level</h3>
-                            <div className="space-y-3">
+                        <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                <span className="mr-2">🎯</span> Difficulty Level
+                            </h3>
+                            <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-sm font-medium text-gray-700">
-                                        Level: {difficulty}
-                                    </label>
-                                    <span className="text-xs text-gray-500">
-                                        {difficulty <= 3 ? 'Beginner' : difficulty <= 6 ? 'Intermediate' : difficulty <= 8 ? 'Advanced' : 'Expert'}
+                                    <span className="text-gray-300 font-medium">Level {difficulty}</span>
+                                    <span className="text-sm px-3 py-1 rounded-full bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-400/30 text-blue-300">
+                                        {difficulty <= 3 ? 'Beginner' : difficulty <= 6 ? 'Intermediate' : difficulty <= 8 ? 'Advanced' : 'Grandmaster'}
                                     </span>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="10"
-                                    value={difficulty}
-                                    onChange={(e) => setDifficulty(parseInt(e.target.value))}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                    disabled={!engineReady}
-                                />
-                                <div className="flex justify-between text-xs text-gray-500">
-                                    <span>1</span>
-                                    <span>5</span>
-                                    <span>10</span>
+                                <div className="relative">
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="10"
+                                        value={difficulty}
+                                        onChange={(e) => setDifficulty(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                                        disabled={!engineReady}
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                                        <span>1</span>
+                                        <span>5</span>
+                                        <span>10</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Game Info */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4">Game Info</h3>
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Turn:</span>
-                                    <span className="font-medium">
-                                        {game.turn() === 'w' ? 'White' : 'Black'}
-                                        {isThinking ? ' (AI)' : ' (You)'}
-                                    </span>
+                        {/* Game Stats */}
+                        <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                <span className="mr-2">📊</span> Game Stats
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-300">Current Turn:</span>
+                                    <div className="flex items-center space-x-2">
+                                        <div className={`w-3 h-3 rounded-full ${game.turn() === 'w' ? 'bg-white' : 'bg-gray-800'}`} />
+                                        <span className="text-white font-medium">
+                                            {game.turn() === 'w' ? 'White' : 'Black'}
+                                        </span>
+                                        {isThinking && <span className="text-blue-400 text-sm">(AI)</span>}
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Move:</span>
-                                    <span className="font-medium">{Math.ceil(game.history().length / 2)}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-300">Move Number:</span>
+                                    <span className="text-white font-medium">{Math.ceil(game.history().length / 2)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Engine:</span>
-                                    <span className={`font-medium ${engineReady ? 'text-green-600' : 'text-yellow-600'}`}>
-                                        {engineReady ? 'Ready' : 'Loading...'}
-                                    </span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-300">Engine Status:</span>
+                                    <div className="flex items-center space-x-2">
+                                        <div className={`w-2 h-2 rounded-full ${engineReady ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                                        <span className={`font-medium ${engineReady ? 'text-green-400' : 'text-yellow-400'}`}>
+                                            {engineReady ? 'Ready' : 'Loading...'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Controls */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-4">Controls</h3>
+                        {/* Game Controls */}
+                        <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                <span className="mr-2">⚡</span> Quick Actions
+                            </h3>
                             <div className="space-y-3">
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={resetGame}
-                                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
                                 >
-                                    New Game
-                                </button>
-                                <button
+                                    🔄 New Game
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={() => router.push('/multiplayer')}
-                                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
                                 >
-                                    Play Multiplayer
-                                </button>
-                                <button
+                                    👥 Multiplayer
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={() => router.push('/analysis')}
-                                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+                                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg"
                                 >
-                                    Analyze Game
-                                </button>
+                                    📈 Analysis
+                                </motion.button>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
