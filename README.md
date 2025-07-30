@@ -6,6 +6,13 @@ A modern, professional-grade chess platform built with Next.js 14, TypeScript, a
 
 🎮 **Play Live**: https://009ajeet.github.io/chess-game/
 
+## Features
+- ♟️ AI Chess Engine with 10 difficulty levels
+- 🌐 Real-time multiplayer chess
+- 📊 Complete game analysis
+- 🔐 Google authentication
+- 🎨 Modern responsive UI
+
 ## 🚀 Features
 
 ### 🧠 AI Chess Engine
