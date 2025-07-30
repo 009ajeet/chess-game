@@ -318,11 +318,10 @@ export default function AnalysisPage() {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={toggleAutoPlay}
-                                    className={`px-6 py-3 rounded-xl text-white transition-all duration-300 shadow-lg border border-white/10 ${
-                                        isAutoPlay 
-                                            ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' 
+                                    className={`px-6 py-3 rounded-xl text-white transition-all duration-300 shadow-lg border border-white/10 ${isAutoPlay
+                                            ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
                                             : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
-                                    }`}
+                                        }`}
                                 >
                                     {isAutoPlay ? '⏸️ Pause' : '▶️ Auto Play'}
                                 </motion.button>
@@ -433,11 +432,10 @@ export default function AnalysisPage() {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3, delay: index * 0.05 }}
-                                            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border ${
-                                                index === currentMove - 1
+                                            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border ${index === currentMove - 1
                                                     ? 'bg-emerald-500/20 border-emerald-400/40 shadow-lg'
                                                     : 'bg-slate-800/30 border-slate-600/30 hover:bg-slate-700/40 hover:border-slate-500/40'
-                                            }`}
+                                                }`}
                                             onClick={() => goToMove(index + 1)}
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
@@ -448,17 +446,16 @@ export default function AnalysisPage() {
                                                     {moveAnalysis.move}
                                                 </span>
                                                 <span
-                                                    className={`text-xs px-3 py-1 rounded-full font-bold ${
-                                                        moveAnalysis.classification === 'excellent'
+                                                    className={`text-xs px-3 py-1 rounded-full font-bold ${moveAnalysis.classification === 'excellent'
                                                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
                                                             : moveAnalysis.classification === 'good'
-                                                            ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
-                                                            : moveAnalysis.classification === 'inaccuracy'
-                                                            ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
-                                                            : moveAnalysis.classification === 'mistake'
-                                                            ? 'bg-orange-500/20 text-orange-300 border border-orange-400/30'
-                                                            : 'bg-red-500/20 text-red-300 border border-red-400/30'
-                                                    }`}
+                                                                ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
+                                                                : moveAnalysis.classification === 'inaccuracy'
+                                                                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
+                                                                    : moveAnalysis.classification === 'mistake'
+                                                                        ? 'bg-orange-500/20 text-orange-300 border border-orange-400/30'
+                                                                        : 'bg-red-500/20 text-red-300 border border-red-400/30'
+                                                        }`}
                                                 >
                                                     {moveAnalysis.classification}
                                                 </span>

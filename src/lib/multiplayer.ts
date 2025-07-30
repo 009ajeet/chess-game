@@ -220,6 +220,110 @@ export class MultiplayerService {
             this.unsubscribeGame = null;
         }
     }
+
+    async updatePlayerStats(userId: string, result: 'win' | 'loss' | 'draw', newRating?: number): Promise<void> {
+        assertDbExists(db);
+
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const currentStats = {
+                    totalGames: userData.totalGames || 0,
+                    wins: userData.wins || 0,
+                    draws: userData.draws || 0,
+                    losses: userData.losses || 0,
+                    rating: userData.rating || 1200,
+                    highestRating: userData.highestRating || userData.rating || 1200,
+                    currentStreak: userData.currentStreak || 0,
+                    longestWinStreak: userData.longestWinStreak || 0
+                };
+
+                const updates: any = {
+                    totalGames: currentStats.totalGames + 1,
+                    lastGameDate: Timestamp.now()
+                };
+
+                // Update game result stats
+                if (result === 'win') {
+                    updates.wins = currentStats.wins + 1;
+                    updates.currentStreak = currentStats.currentStreak + 1;
+                    updates.longestWinStreak = Math.max(currentStats.longestWinStreak, updates.currentStreak);
+                } else if (result === 'loss') {
+                    updates.losses = currentStats.losses + 1;
+                    updates.currentStreak = 0;
+                } else {
+                    updates.draws = currentStats.draws + 1;
+                    updates.currentStreak = 0;
+                }
+
+                // Update rating if provided
+                if (newRating !== undefined) {
+                    updates.rating = newRating;
+                    updates.highestRating = Math.max(currentStats.highestRating, newRating);
+                }
+
+                await updateDoc(userRef, updates);
+                console.log('Updated player stats for:', userId, result);
+            } else {
+                // Create initial stats if user doesn't exist
+                const initialStats = {
+                    totalGames: 1,
+                    wins: result === 'win' ? 1 : 0,
+                    draws: result === 'draw' ? 1 : 0,
+                    losses: result === 'loss' ? 1 : 0,
+                    rating: newRating || 1200,
+                    highestRating: newRating || 1200,
+                    currentStreak: result === 'win' ? 1 : 0,
+                    longestWinStreak: result === 'win' ? 1 : 0,
+                    joinedDate: Timestamp.now(),
+                    lastGameDate: Timestamp.now()
+                };
+
+                await setDoc(userRef, initialStats, { merge: true });
+                console.log('Created initial stats for:', userId);
+            }
+        } catch (error) {
+            console.error('Error updating player stats:', error);
+        }
+    }
+
+    async finishGame(roomId: string, result: 'white' | 'black' | 'draw', gameData: MultiplayerGame): Promise<void> {
+        assertDbExists(db);
+
+        try {
+            // Update game status
+            await updateDoc(doc(db, 'games', roomId), {
+                'gameState.isGameOver': true,
+                'gameState.result': result,
+                status: 'finished',
+                finishedAt: Timestamp.now()
+            });
+
+            // Update player stats
+            const whitePlayer = gameData.players.white;
+            const blackPlayer = gameData.players.black;
+
+            if (whitePlayer && blackPlayer) {
+                if (result === 'white') {
+                    await this.updatePlayerStats(whitePlayer.uid, 'win');
+                    await this.updatePlayerStats(blackPlayer.uid, 'loss');
+                } else if (result === 'black') {
+                    await this.updatePlayerStats(blackPlayer.uid, 'win');
+                    await this.updatePlayerStats(whitePlayer.uid, 'loss');
+                } else {
+                    await this.updatePlayerStats(whitePlayer.uid, 'draw');
+                    await this.updatePlayerStats(blackPlayer.uid, 'draw');
+                }
+            }
+
+            console.log('Game finished:', roomId, 'Result:', result);
+        } catch (error) {
+            console.error('Error finishing game:', error);
+        }
+    }
 }
 
 export const multiplayerService = new MultiplayerService();

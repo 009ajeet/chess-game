@@ -101,7 +101,16 @@ export default function Home() {
                 Sign In to Play
               </motion.button>
             ) : (
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => router.push('/profile')}
+                  className="bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 text-indigo-300 px-4 py-2 rounded-lg hover:from-indigo-600/30 hover:to-purple-600/30 transition-all duration-300 flex items-center space-x-2"
+                >
+                  <span>👤</span>
+                  <span>Profile</span>
+                </motion.button>
                 <div className="text-right">
                   <p className="text-white font-semibold">Welcome back!</p>
                   <p className="text-blue-300 text-sm">{user.username}</p>
@@ -238,31 +247,52 @@ export default function Home() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6"
         >
-          <div className="text-center">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="text-center bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-blue-400/40 transition-all duration-300"
+          >
             <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-blue-400 text-2xl">⚡</span>
             </div>
             <h4 className="text-lg font-semibold text-white mb-2">Lightning Fast</h4>
-            <p className="text-gray-400 text-sm">Optimized performance with instant move validation and smooth animations</p>
-          </div>
+            <p className="text-gray-400 text-sm">Optimized performance with instant move validation</p>
+          </motion.div>
 
-          <div className="text-center">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="text-center bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-green-400/40 transition-all duration-300"
+          >
             <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-green-400 text-2xl">🎯</span>
             </div>
             <h4 className="text-lg font-semibold text-white mb-2">Professional Analysis</h4>
-            <p className="text-gray-400 text-sm">Advanced game evaluation with Stockfish-powered move suggestions</p>
-          </div>
+            <p className="text-gray-400 text-sm">Stockfish-powered move suggestions and evaluation</p>
+          </motion.div>
 
-          <div className="text-center">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            onClick={() => router.push('/profile')}
+            className="text-center bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-indigo-400/40 transition-all duration-300 cursor-pointer group"
+          >
+            <div className="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-500/30 transition-all duration-300">
+              <span className="text-indigo-400 text-2xl">👤</span>
+            </div>
+            <h4 className="text-lg font-semibold text-white mb-2">Player Profile</h4>
+            <p className="text-gray-400 text-sm">Track stats, rating, and achievements</p>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="text-center bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-purple-400/40 transition-all duration-300"
+          >
             <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
               <span className="text-purple-400 text-2xl">🌐</span>
             </div>
             <h4 className="text-lg font-semibold text-white mb-2">Cross-Platform</h4>
-            <p className="text-gray-400 text-sm">Play seamlessly across desktop, tablet, and mobile devices</p>
-          </div>
+            <p className="text-gray-400 text-sm">Play seamlessly across all devices</p>
+          </motion.div>
         </motion.div>
       </div>
 

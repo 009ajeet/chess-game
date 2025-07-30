@@ -226,7 +226,7 @@ class StockfishWrapper {
 
         // Calculate move scores and select based on skill level
         const moveScores = this.evaluateAllMoves(chess, legalMoves);
-        
+
         // Beginner level (800-1000): Frequent blunders, basic pattern recognition
         if (elo <= 1000) {
             // 25% chance of completely random move (major blunder)
@@ -234,13 +234,13 @@ class StockfishWrapper {
                 console.log('Beginner making random blunder');
                 return legalMoves[Math.floor(Math.random() * legalMoves.length)];
             }
-            
+
             // 40% chance of sub-optimal move
             if (Math.random() < 0.4) {
                 const randomSelection = moveScores.slice(Math.floor(moveScores.length * 0.3));
                 return randomSelection[Math.floor(Math.random() * randomSelection.length)].move;
             }
-            
+
             // Otherwise try to make a decent move
             return this.selectFromTopMoves(moveScores, 0.6);
         }
@@ -253,7 +253,7 @@ class StockfishWrapper {
                 const poorMoves = moveScores.slice(Math.floor(moveScores.length * 0.4));
                 return poorMoves[Math.floor(Math.random() * poorMoves.length)].move;
             }
-            
+
             // Usually plays decent moves
             return this.selectFromTopMoves(moveScores, 0.75);
         }
@@ -266,7 +266,7 @@ class StockfishWrapper {
                 const weakMoves = moveScores.slice(Math.floor(moveScores.length * 0.3));
                 return weakMoves[Math.floor(Math.random() * Math.min(5, weakMoves.length))].move;
             }
-            
+
             return this.selectFromTopMoves(moveScores, 0.85);
         }
 
@@ -276,7 +276,7 @@ class StockfishWrapper {
             if (Math.random() < 0.05) {
                 return this.selectFromTopMoves(moveScores, 0.8);
             }
-            
+
             return this.selectFromTopMoves(moveScores, 0.92);
         }
 
@@ -286,7 +286,7 @@ class StockfishWrapper {
             if (Math.random() < 0.03) {
                 return this.selectFromTopMoves(moveScores, 0.9);
             }
-            
+
             return this.selectFromTopMoves(moveScores, 0.95);
         }
 
@@ -301,7 +301,7 @@ class StockfishWrapper {
         return this.selectFromTopMoves(moveScores, 0.98);
     }
 
-    private evaluateAllMoves(chess: Chess, legalMoves: any[]): Array<{move: any, score: number}> {
+    private evaluateAllMoves(chess: Chess, legalMoves: any[]): Array<{ move: any, score: number }> {
         const moveScores = legalMoves.map(move => ({
             move,
             score: this.evaluateMove(chess, move)
@@ -309,7 +309,7 @@ class StockfishWrapper {
 
         // Sort by score (higher is better)
         moveScores.sort((a, b) => b.score - a.score);
-        
+
         console.log(`Top 3 moves:`, moveScores.slice(0, 3).map(m => `${m.move.from}${m.move.to} (${m.score.toFixed(1)})`));
         return moveScores;
     }
@@ -350,7 +350,7 @@ class StockfishWrapper {
         // Center control (important for all levels)
         const centerSquares = ['e4', 'e5', 'd4', 'd5'];
         const nearCenterSquares = ['c3', 'c4', 'c5', 'c6', 'f3', 'f4', 'f5', 'f6'];
-        
+
         if (centerSquares.includes(move.to)) {
             score += 30;
         } else if (nearCenterSquares.includes(move.to)) {
@@ -362,7 +362,7 @@ class StockfishWrapper {
             if (['n', 'b'].includes(move.piece) && ['1', '8'].includes(move.from[1])) {
                 score += 40; // Developing pieces
             }
-            
+
             // Avoid moving same piece twice
             if (this.hasMovedPieceBefore(chess, move.piece, move.from)) {
                 score -= 20;
@@ -391,14 +391,14 @@ class StockfishWrapper {
         return score;
     }
 
-    private selectFromTopMoves(moveScores: Array<{move: any, score: number}>, percentile: number): any {
+    private selectFromTopMoves(moveScores: Array<{ move: any, score: number }>, percentile: number): any {
         const topCount = Math.max(1, Math.floor(moveScores.length * percentile));
         const topMoves = moveScores.slice(0, topCount);
-        
+
         // Add some randomness even among top moves
         const weights = topMoves.map((_, index) => Math.pow(0.8, index));
         const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-        
+
         let random = Math.random() * totalWeight;
         for (let i = 0; i < topMoves.length; i++) {
             random -= weights[i];
@@ -407,7 +407,7 @@ class StockfishWrapper {
                 return topMoves[i].move;
             }
         }
-        
+
         return topMoves[0].move;
     }
 
@@ -419,7 +419,7 @@ class StockfishWrapper {
         const opponentColor = afterMove.turn();
         afterMove.load(afterMove.fen().replace(` ${opponentColor} `, ` ${opponentColor === 'w' ? 'b' : 'w'} `));
         const opponentMoves = afterMove.moves().length;
-        
+
         score += (ourMoves - opponentMoves) * 2; // Mobility advantage
 
         // Pawn structure
@@ -452,12 +452,12 @@ class StockfishWrapper {
 
     private evaluateKingSafety(chess: Chess, move: any): number {
         let score = 0;
-        
+
         // Penalty for exposing king
         if (move.piece === 'k') {
             const kingFile = move.to[0];
             const kingRank = parseInt(move.to[1]);
-            
+
             // Avoid moving king to center early
             if (chess.history().length < 30 && ['d', 'e'].includes(kingFile) && [3, 4, 5, 6].includes(kingRank)) {
                 score -= 40;
@@ -477,7 +477,7 @@ class StockfishWrapper {
         // Simple check - in real implementation would be more sophisticated
         const tempChess = new Chess(chess.fen());
         const originalTurn = tempChess.turn();
-        
+
         // Switch turn to check if square is attacked
         const fen = tempChess.fen().replace(` ${originalTurn} `, ` ${byColor} `);
         try {
@@ -493,7 +493,7 @@ class StockfishWrapper {
         // Basic pawn structure evaluation
         let score = 0;
         const board = chess.board();
-        
+
         // Count doubled pawns, isolated pawns, etc.
         // This is a simplified version
         for (let file = 0; file < 8; file++) {
@@ -505,40 +505,40 @@ class StockfishWrapper {
                     else blackPawns++;
                 }
             }
-            
+
             // Penalty for doubled pawns
             if (whitePawns > 1) score -= (whitePawns - 1) * 10;
             if (blackPawns > 1) score += (blackPawns - 1) * 10;
         }
-        
+
         return score;
     }
 
     private evaluatePieceCoordination(chess: Chess, move: any): number {
         // Simplified piece coordination evaluation
         let score = 0;
-        
+
         // Bonus for pieces supporting each other
         const defenders = this.countDefenders(chess, move.to);
         score += defenders * 5;
-        
+
         return score;
     }
 
     private findTacticalMotifs(chess: Chess, move: any): number {
         let score = 0;
-        
+
         // Check for forks (attacking multiple pieces)
         const attacks = this.getAttackedSquares(chess, move.to, chess.turn());
         const valuableTargets = attacks.filter(square => {
             const piece = chess.get(square);
             return piece && piece.color !== chess.turn() && ['r', 'q', 'k'].includes(piece.type);
         });
-        
+
         if (valuableTargets.length > 1) {
             score += 80; // Fork bonus
         }
-        
+
         return score;
     }
 
@@ -556,11 +556,11 @@ class StockfishWrapper {
         // Count pieces defending a square
         let count = 0;
         const moves = chess.moves({ verbose: true });
-        
+
         moves.forEach(move => {
             if (move.to === square) count++;
         });
-        
+
         return count;
     }
 
