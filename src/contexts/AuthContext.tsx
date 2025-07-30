@@ -49,6 +49,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         if (!mounted) return;
 
+        // Check if Firebase is available (not in demo mode)
+        if (!auth || !db) {
+            // Demo mode - create a mock user
+            console.log('Demo mode: Creating mock user');
+            const mockUser: User = {
+                uid: 'demo-user',
+                email: 'demo@example.com',
+                username: 'Demo Player',
+                displayName: 'Demo Player',
+                photoURL: null,
+                rating: 1200,
+                gamesPlayed: 0,
+                gamesWon: 0,
+                createdAt: new Date(),
+                lastActive: new Date(),
+            };
+            setUser(mockUser);
+            setLoading(false);
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             setFirebaseUser(firebaseUser);
 
@@ -102,6 +123,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [mounted]);
 
     const signInWithGoogle = async () => {
+        if (!auth) {
+            toast.success('Demo mode: Signed in as Demo Player');
+            return;
+        }
+
         try {
             console.log('🔄 Attempting Google sign-in...');
             const provider = new GoogleAuthProvider();
@@ -164,6 +190,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
+        if (!auth) {
+            // Demo mode - just clear the user
+            setUser(null);
+            setFirebaseUser(null);
+            toast.success('Demo mode: Signed out');
+            return;
+        }
+
         try {
             await signOut(auth);
             toast.success('Successfully signed out!');
