@@ -1,6 +1,10 @@
 # AI Chess Platform
 
-A professional-grade chess platform built with Next.js 14, featuring AI opponents, real-time multiplayer, and comprehensive game analysis.
+# Professional AI Chess Platform
+
+A modern, professional-grade chess platform built with Next.js 14, TypeScript, and Firebase. Features AI opponents with 10 difficulty levels, real-time multiplayer, and comprehensive game analysis.
+
+🎮 **Play Live**: https://009ajeet.github.io/chess-game/
 
 ## 🚀 Features
 
