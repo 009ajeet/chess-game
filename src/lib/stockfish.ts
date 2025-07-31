@@ -12,37 +12,33 @@ class StockfishWrapper {
             this.terminate();
         }
 
-        // Always use mock engine for now to avoid module issues
-        console.log('Using mock Stockfish engine for development');
-        this.createMockEngine();
-        return Promise.resolve();
-
-        /* TODO: Re-enable real Stockfish once module is properly configured
         try {
-            // First try browser-based approach
+            // Try to initialize real Stockfish WASM in browser
             if (typeof window !== 'undefined') {
-                console.log('Attempting to initialize Stockfish in browser...');
+                console.log('Attempting to initialize real Stockfish engine...');
                 
                 // Try dynamic import for Stockfish WASM
                 let StockfishModule;
                 try {
-                    StockfishModule = await import('stockfish');
+                    const stockfishImport = await import('stockfish' as any);
+                    StockfishModule = stockfishImport.default || stockfishImport;
                 } catch (importError) {
-                    console.warn('Failed to import stockfish module:', importError);
-                    throw importError;
+                    console.warn('Failed to import stockfish module, falling back to mock:', importError);
+                    this.createMockEngine();
+                    return Promise.resolve();
                 }
                 
-                const Stockfish = StockfishModule.default || StockfishModule;
-                
-                if (typeof Stockfish === 'function') {
-                    this.engine = new (Stockfish as any)() as StockfishEngine;
+                if (typeof StockfishModule === 'function') {
+                    this.engine = new (StockfishModule as any)() as StockfishEngine;
                 } else {
                     throw new Error('Stockfish module is not a constructor function');
                 }
 
                 return new Promise((resolve, reject) => {
                     if (!this.engine) {
-                        reject(new Error('Failed to create Stockfish engine'));
+                        console.error('Failed to create Stockfish engine, using mock');
+                        this.createMockEngine();
+                        resolve();
                         return;
                     }
 
@@ -60,7 +56,7 @@ class StockfishWrapper {
                         } else if (message === 'readyok') {
                             this.isReady = true;
                             clearTimeout(timeout);
-                            console.log('Stockfish engine initialized successfully');
+                            console.log('Real Stockfish engine initialized successfully!');
                             resolve();
                         } else if (typeof message === 'string' && message.startsWith('info')) {
                             this.parseEvaluation(message);
@@ -72,19 +68,17 @@ class StockfishWrapper {
                     this.engine.postMessage('uci');
                 });
             } else {
-                // Server-side: just create mock engine
+                // Server-side: use mock engine
                 console.log('Server-side detected, using mock engine');
                 this.createMockEngine();
                 return Promise.resolve();
             }
         } catch (error) {
-            console.error('Failed to initialize Stockfish:', error);
-            console.log('Falling back to mock engine for development');
-            // Graceful fallback - create a mock engine for development
+            console.error('Failed to initialize real Stockfish:', error);
+            console.log('Falling back to mock engine');
             this.createMockEngine();
-            return Promise.resolve(); // Don't throw error, just use mock
+            return Promise.resolve();
         }
-        */
     }
 
     private createMockEngine(): void {
@@ -101,42 +95,72 @@ class StockfishWrapper {
                     } else if (message === 'isready') {
                         this.engine?.onmessage?.({ data: 'readyok' } as any);
                     } else if (message.startsWith('go')) {
-                        // Simulate thinking with info messages (faster)
-                        setTimeout(() => {
-                            // Send analysis info quickly
-                            const depth = Math.floor(Math.random() * 10) + 8;
-                            const score = Math.floor(Math.random() * 100) - 50;
-                            const nodes = Math.floor(Math.random() * 50000) + 5000;
-                            const nps = Math.floor(Math.random() * 200000) + 50000;
-                            const time = Math.floor(Math.random() * 800) + 200;
-
-                            const mockInfo = `info depth ${depth} score cp ${score} nodes ${nodes} nps ${nps} time ${time} pv e2e4 e7e5 g1f3`;
-                            this.engine?.onmessage?.({ data: mockInfo } as any);
-                        }, 100);
-
-                        // Simulate a best move response after short thinking
-                        setTimeout(() => {
-                            try {
-                                // Generate a more intelligent move using chess.js
-                                let bestMove = this.generateMockMove(message);
-                                console.log('Mock engine sending bestmove:', bestMove);
-                                this.engine?.onmessage?.({ data: `bestmove ${bestMove}` } as any);
-
-                                // Also trigger the callback directly if it exists
-                                if (this.bestMoveCallback) {
-                                    console.log('Calling bestMove callback with:', bestMove);
-                                    this.bestMoveCallback(bestMove);
+                        // Determine if this is analysis or move request
+                        const isAnalysis = message.includes('depth');
+                        
+                        if (isAnalysis) {
+                            // Simulate analysis with multiple depth updates
+                            setTimeout(() => {
+                                for (let depth = 8; depth <= 15; depth++) {
+                                    setTimeout(() => {
+                                        const evaluation = this.generateMockEvaluation(depth);
+                                        const mockInfo = `info depth ${depth} score cp ${evaluation.score} nodes ${evaluation.nodes} nps ${evaluation.nps} time ${evaluation.time} pv ${evaluation.bestMove} e7e5 g1f3`;
+                                        this.engine?.onmessage?.({ data: mockInfo } as any);
+                                        
+                                        // Trigger evaluation callback if available
+                                        if (this.evalCallback && depth >= 12) {
+                                            this.evalCallback({
+                                                depth: depth,
+                                                score: evaluation.score / 100, // Convert centipawns to pawns
+                                                nodes: evaluation.nodes,
+                                                nps: evaluation.nps,
+                                                time: evaluation.time,
+                                                bestMove: evaluation.bestMove,
+                                                pv: [evaluation.bestMove, 'e7e5', 'g1f3']
+                                            });
+                                        }
+                                    }, depth * 50); // Stagger depth updates
                                 }
-                            } catch (error) {
-                                console.error('Error in mock move generation:', error);
-                                // Send a simple fallback move
-                                const fallback = 'e2e4';
-                                this.engine?.onmessage?.({ data: `bestmove ${fallback}` } as any);
-                                if (this.bestMoveCallback) {
-                                    this.bestMoveCallback(fallback);
+                            }, 100);
+                        } else {
+                            // Regular move generation
+                            // Simulate thinking with info messages (faster)
+                            setTimeout(() => {
+                                // Send analysis info quickly
+                                const depth = Math.floor(Math.random() * 10) + 8;
+                                const score = Math.floor(Math.random() * 100) - 50;
+                                const nodes = Math.floor(Math.random() * 50000) + 5000;
+                                const nps = Math.floor(Math.random() * 200000) + 50000;
+                                const time = Math.floor(Math.random() * 800) + 200;
+
+                                const mockInfo = `info depth ${depth} score cp ${score} nodes ${nodes} nps ${nps} time ${time} pv e2e4 e7e5 g1f3`;
+                                this.engine?.onmessage?.({ data: mockInfo } as any);
+                            }, 100);
+
+                            // Simulate a best move response after short thinking
+                            setTimeout(() => {
+                                try {
+                                    // Generate a more intelligent move using chess.js
+                                    let bestMove = this.generateMockMove(message);
+                                    console.log('Mock engine sending bestmove:', bestMove);
+                                    this.engine?.onmessage?.({ data: `bestmove ${bestMove}` } as any);
+
+                                    // Also trigger the callback directly if it exists
+                                    if (this.bestMoveCallback) {
+                                        console.log('Calling bestMove callback with:', bestMove);
+                                        this.bestMoveCallback(bestMove);
+                                    }
+                                } catch (error) {
+                                    console.error('Error in mock move generation:', error);
+                                    // Send a simple fallback move
+                                    const fallback = 'e2e4';
+                                    this.engine?.onmessage?.({ data: `bestmove ${fallback}` } as any);
+                                    if (this.bestMoveCallback) {
+                                        this.bestMoveCallback(fallback);
+                                    }
                                 }
-                            }
-                        }, 300 + Math.random() * 500); // Much shorter thinking time: 0.3-0.8s
+                            }, 300 + Math.random() * 500); // Much shorter thinking time: 0.3-0.8s
+                        }
                     } else if (message.startsWith('position')) {
                         // Store the position for move generation
                         this.currentPosition = message;
@@ -155,6 +179,90 @@ class StockfishWrapper {
     }
 
     private currentPosition: string = 'position startpos';
+
+    private generateMockEvaluation(depth: number): { score: number, nodes: number, nps: number, time: number, bestMove: string } {
+        try {
+            const chess = new Chess();
+            
+            // Set up the board position
+            if (this.currentPosition.includes('fen')) {
+                const fenMatch = this.currentPosition.match(/fen\s+(.+)/);
+                if (fenMatch && fenMatch[1]) {
+                    try {
+                        const fenOnly = fenMatch[1].split(' moves')[0].trim();
+                        chess.load(fenOnly);
+                    } catch (e) {
+                        chess.reset();
+                    }
+                }
+            } else if (this.currentPosition.includes('moves')) {
+                const movesMatch = this.currentPosition.match(/moves\s+(.+)/);
+                if (movesMatch) {
+                    const moves = movesMatch[1].split(' ').filter(m => m.trim());
+                    for (const move of moves) {
+                        try {
+                            const result = chess.move(move);
+                            if (!result) break;
+                        } catch (e) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const legalMoves = chess.moves({ verbose: true });
+            if (legalMoves.length === 0) {
+                return {
+                    score: 0,
+                    nodes: depth * 1000,
+                    nps: 50000,
+                    time: depth * 100,
+                    bestMove: 'e2e4'
+                };
+            }
+
+            // Get best move using our enhanced evaluation
+            const moveScores = this.evaluateAllMoves(chess, legalMoves);
+            const bestMove = moveScores[0].move;
+            
+            let moveString = bestMove.from + bestMove.to;
+            if (bestMove.promotion) {
+                moveString += bestMove.promotion;
+            }
+
+            // Generate realistic evaluation score based on position
+            let score = Math.round(moveScores[0].score * 10); // Convert to centipawns
+            
+            // Add some position-based evaluation
+            if (chess.inCheck()) {
+                score += chess.turn() === 'w' ? -30 : 30;
+            }
+            
+            if (chess.isCheckmate()) {
+                score = chess.turn() === 'w' ? -30000 : 30000;
+            } else if (chess.isDraw()) {
+                score = 0;
+            }
+
+            return {
+                score: Math.max(-3000, Math.min(3000, score)), // Clamp to reasonable range
+                nodes: depth * 1000 + Math.floor(Math.random() * 5000),
+                nps: 45000 + Math.floor(Math.random() * 20000),
+                time: depth * 80 + Math.floor(Math.random() * 200),
+                bestMove: moveString
+            };
+
+        } catch (error) {
+            console.error('Error generating mock evaluation:', error);
+            return {
+                score: 0,
+                nodes: depth * 1000,
+                nps: 50000,
+                time: depth * 100,
+                bestMove: 'e2e4'
+            };
+        }
+    }
 
     private generateMockMove(goCommand: string): string {
         try {
@@ -336,7 +444,7 @@ class StockfishWrapper {
         }
 
         // Check/checkmate
-        if (tempChess.inCheckmate()) {
+        if (tempChess.isCheckmate()) {
             score += 10000;
         } else if (tempChess.inCheck()) {
             score += 50;
@@ -531,8 +639,12 @@ class StockfishWrapper {
         // Check for forks (attacking multiple pieces)
         const attacks = this.getAttackedSquares(chess, move.to, chess.turn());
         const valuableTargets = attacks.filter(square => {
-            const piece = chess.get(square);
-            return piece && piece.color !== chess.turn() && ['r', 'q', 'k'].includes(piece.type);
+            try {
+                const piece = chess.get(square as any);
+                return piece && piece.color !== chess.turn() && ['r', 'q', 'k'].includes(piece.type);
+            } catch {
+                return false;
+            }
         });
 
         if (valuableTargets.length > 1) {
@@ -566,8 +678,12 @@ class StockfishWrapper {
 
     private getAttackedSquares(chess: Chess, fromSquare: string, color: string): string[] {
         // Get all squares attacked by a piece on fromSquare
-        const moves = chess.moves({ verbose: true, square: fromSquare });
-        return moves.map(move => move.to);
+        try {
+            const moves = chess.moves({ verbose: true, square: fromSquare as any });
+            return moves.map(move => move.to);
+        } catch {
+            return [];
+        }
     }
 
     private currentSkillLevel: number = 5;
@@ -617,14 +733,17 @@ class StockfishWrapper {
         this.engine.postMessage(`go depth ${depth}`);
     }
 
-    getBestMove(fen: string, timeMs = 1000, onBestMove?: (move: string) => void): void {
+    getBestMove(fen: string, timeMs = 2000, onBestMove?: (move: string) => void): void {
         if (!this.engine || !this.isReady) return;
 
         this.bestMoveCallback = onBestMove || null;
 
         // Set position using FEN (proper UCI format)
         this.engine.postMessage(`position fen ${fen}`);
-        this.engine.postMessage(`go movetime ${timeMs}`);
+        
+        // Use both time and depth for stronger play
+        const depth = Math.min(18, Math.max(8, Math.floor(this.currentEloRating / 150)));
+        this.engine.postMessage(`go depth ${depth} movetime ${timeMs}`);
     }
 
     stop(): void {

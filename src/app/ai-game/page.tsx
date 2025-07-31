@@ -57,10 +57,13 @@ export default function AIGamePage() {
         setIsThinking(true);
 
         try {
+            // Increase thinking time based on difficulty level for stronger play
+            const thinkingTime = Math.max(1500, difficulty * 400); // 1.5s to 4s based on difficulty
+            
             await new Promise<void>((resolve) => {
-                stockfishEngine.getBestMove(game.fen(), 1000, (bestMove) => {
+                stockfishEngine.getBestMove(game.fen(), thinkingTime, (bestMove) => {
                     try {
-                        console.log('AI suggested move:', bestMove, 'for position:', game.fen());
+                        console.log(`AI (Level ${difficulty}) suggested move:`, bestMove, 'after', thinkingTime + 'ms thinking');
 
                         // Validate move format
                         if (!bestMove || bestMove.length < 4) {
@@ -130,13 +133,13 @@ export default function AIGamePage() {
         if (game.isCheckmate()) {
             const winner = game.turn() === 'w' ? 'black' : 'white';
             setGameStatus(winner === 'black' ? 'Black wins by checkmate!' : 'White wins by checkmate!');
-            
+
             // Update stats if user is logged in and game hasn't ended yet
             if (user && !gameEnded && gameStartTime) {
                 setGameEnded(true);
                 const playerWins = winner === 'white'; // Player is white
                 const gameLength = Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000 / 60); // minutes
-                
+
                 try {
                     await statsService.updateUserStats(
                         user.uid,
@@ -152,12 +155,12 @@ export default function AIGamePage() {
             }
         } else if (game.isDraw()) {
             setGameStatus('Game ended in a draw!');
-            
+
             // Update stats for draw
             if (user && !gameEnded && gameStartTime) {
                 setGameEnded(true);
                 const gameLength = Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000 / 60); // minutes
-                
+
                 try {
                     await statsService.updateUserStats(
                         user.uid,

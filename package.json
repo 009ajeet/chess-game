@@ -22,6 +22,7 @@
     "react-chessboard": "^5.2.1",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.5.2",
+    "stockfish": "^16.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -29,6 +29,7 @@ export default function AnalysisPage() {
     const [analysis, setAnalysis] = useState<GameAnalysis[]>([]);
     const [isAutoPlay, setIsAutoPlay] = useState(false);
     const [engineReady, setEngineReady] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState(0);
 
     useEffect(() => {
         // Initialize engine for analysis
@@ -113,18 +114,29 @@ export default function AnalysisPage() {
 
         setIsAnalyzing(true);
         setAnalysis([]);
+        setAnalysisProgress(0);
 
         try {
             const currentMoves = demoMoves.slice(0, currentMove);
+            console.log(`Starting analysis of ${currentMoves.length} moves...`);
+            
             const evaluations = await analyzeGame(currentMoves, (progress) => {
+                setAnalysisProgress(progress);
                 console.log(`Analysis progress: ${Math.round(progress * 100)}%`);
             });
+
+            console.log('Analysis completed, evaluations received:', evaluations.length);
 
             const gameAnalysis: GameAnalysis[] = [];
 
             for (let i = 0; i < currentMoves.length; i++) {
                 const evaluation = evaluations[i];
-                const prevEval = i > 0 ? evaluations[i - 1].score : 0;
+                if (!evaluation) {
+                    console.warn(`No evaluation for move ${i + 1}`);
+                    continue;
+                }
+                
+                const prevEval = i > 0 ? evaluations[i - 1]?.score || 0 : 0;
 
                 gameAnalysis.push({
                     moveNumber: i + 1,
@@ -136,12 +148,14 @@ export default function AnalysisPage() {
                 });
             }
 
+            console.log('Game analysis completed:', gameAnalysis.length, 'moves analyzed');
             setAnalysis(gameAnalysis);
         } catch (error) {
             console.error('Analysis failed:', error);
             alert('Analysis failed. Please try again.');
         } finally {
             setIsAnalyzing(false);
+            setAnalysisProgress(0);
         }
     };
 
@@ -154,374 +168,209 @@ export default function AnalysisPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-hidden">
-            {/* Premium Animated Background */}
-            <div className="absolute inset-0 overflow-hidden">
-                <motion.div
-                    animate={{
-                        rotate: 360,
-                        scale: [1, 1.2, 1]
-                    }}
-                    transition={{
-                        duration: 30,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        rotate: -360,
-                        scale: [1.2, 1, 1.2]
-                    }}
-                    transition={{
-                        duration: 35,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        rotate: 180,
-                        scale: [1, 1.1, 1]
-                    }}
-                    transition={{
-                        duration: 25,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="absolute top-1/2 left-1/2 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"
-                />
-            </div>
-
-            <div className="relative z-10 max-w-7xl mx-auto p-6">
-                {/* Premium Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-8 mb-8"
-                >
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-4">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent mb-3">
-                                🔬 Game Analysis Lab
-                            </h1>
-                            <p className="text-gray-300 text-lg">Professional-grade chess analysis powered by Stockfish</p>
-                            <div className="flex items-center space-x-4 mt-3">
-                                <div className="flex items-center space-x-2">
-                                    <div className={`w-3 h-3 rounded-full ${engineReady ? 'bg-emerald-400' : 'bg-yellow-400'} ${!engineReady ? 'animate-pulse' : ''}`} />
-                                    <span className={`text-sm font-medium ${engineReady ? 'text-emerald-300' : 'text-yellow-300'}`}>
-                                        Engine {engineReady ? 'Ready' : 'Initializing...'}
-                                    </span>
-                                </div>
-                                <div className="w-px h-6 bg-white/20" />
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-400">Demo Game:</span>
-                                    <span className="text-sm font-bold text-emerald-300">Spanish Opening</span>
-                                </div>
-                            </div>
+                            <h1 className="text-3xl font-bold text-gray-900">Game Analysis Demo</h1>
+                            <p className="text-gray-600">Analyze chess games with Stockfish engine</p>
                         </div>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <button
                             onClick={goBack}
-                            className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg border border-white/10"
+                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                         >
-                            ← Back Home
-                        </motion.button>
+                            Back to Home
+                        </button>
                     </div>
-                </motion.div>
+                </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                    {/* Premium Game Board */}
-                    <div className="xl:col-span-3">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-8"
-                        >
-                            {/* Premium Move Counter */}
-                            <div className="mb-8 text-center">
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="inline-flex items-center space-x-4 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-400/30"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-2xl">📊</span>
-                                        <div>
-                                            <div className="text-sm text-emerald-300 font-medium">Position</div>
-                                            <div className="text-lg font-bold text-white">
-                                                Move {currentMove} of {demoMoves.length}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {isAnalyzing && (
-                                        <>
-                                            <div className="w-px h-8 bg-emerald-400/30" />
-                                            <div className="flex items-center space-x-2">
-                                                <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                                                <span className="text-emerald-300 font-medium">Analyzing...</span>
-                                            </div>
-                                        </>
-                                    )}
-                                </motion.div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Game Board */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <div className="mb-4 text-center">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                    Spanish Opening Demo Game
+                                </h3>
+                                <p className="text-gray-600">
+                                    Move {currentMove} of {demoMoves.length}
+                                    {isAnalyzing && <span className="text-blue-600 ml-2">🔍 Analyzing...</span>}
+                                </p>
                             </div>
 
-                            {/* Premium Chessboard */}
-                            <div className="flex justify-center mb-8">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.4 }}
-                                    className="w-full max-w-2xl"
-                                    style={{ aspectRatio: '1' }}
-                                >
+                            <div className="flex justify-center mb-6">
+                                <div style={{ width: '100%', maxWidth: '500px' }}>
                                     <Chessboard
                                         options={{
                                             position: gamePosition,
                                             boardOrientation: "white",
                                             allowDragging: false,
                                             boardStyle: {
-                                                borderRadius: '16px',
-                                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                                                border: '2px solid rgba(16, 185, 129, 0.3)',
+                                                borderRadius: '4px',
+                                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
                                             }
                                         }}
                                     />
-                                </motion.div>
+                                </div>
                             </div>
 
-                            {/* Premium Game Controls */}
-                            <div className="flex justify-center space-x-3 mb-6">
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                            {/* Game Controls */}
+                            <div className="flex justify-center space-x-2 mb-4">
+                                <button
                                     onClick={() => goToMove(0)}
                                     disabled={currentMove === 0}
-                                    className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg border border-white/10"
+                                    className="bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 >
                                     ⏮️ Start
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                </button>
+                                <button
                                     onClick={previousMove}
                                     disabled={currentMove === 0}
-                                    className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg border border-white/10"
+                                    className="bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 >
                                     ⏪ Prev
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                </button>
+                                <button
                                     onClick={toggleAutoPlay}
-                                    className={`px-6 py-3 rounded-xl text-white transition-all duration-300 shadow-lg border border-white/10 ${isAutoPlay
-                                            ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
-                                            : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
-                                        }`}
+                                    className={`px-4 py-2 rounded text-white ${isAutoPlay ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
                                 >
                                     {isAutoPlay ? '⏸️ Pause' : '▶️ Auto Play'}
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                </button>
+                                <button
                                     onClick={nextMove}
                                     disabled={currentMove >= demoMoves.length}
-                                    className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg border border-white/10"
+                                    className="bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 >
                                     Next ⏩
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                </button>
+                                <button
                                     onClick={() => goToMove(demoMoves.length)}
                                     disabled={currentMove >= demoMoves.length}
-                                    className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-xl hover:from-slate-700 hover:to-slate-800 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed transition-all duration-300 shadow-lg border border-white/10"
+                                    className="bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 >
                                     End ⏭️
-                                </motion.button>
+                                </button>
                             </div>
 
-                            {/* Premium Analysis Button */}
+                            {/* Analysis Control */}
                             <div className="text-center">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     onClick={analyzeCurrentGame}
                                     disabled={isAnalyzing || !engineReady}
-                                    className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 text-white px-8 py-4 rounded-xl hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 disabled:from-slate-400 disabled:via-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed font-bold text-lg transition-all duration-300 shadow-xl border border-white/10"
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                                 >
                                     {isAnalyzing ? (
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            <span>� Deep Analysis in Progress...</span>
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <span>🧠 Analyzing... {Math.round(analysisProgress * 100)}%</span>
                                         </div>
                                     ) : (
-                                        '� Analyze Game with Stockfish'
+                                        '🧠 Analyze Game with Stockfish'
                                     )}
-                                </motion.button>
+                                </button>
                                 {!engineReady && (
-                                    <p className="text-yellow-300 text-sm mt-3 flex items-center justify-center space-x-2">
-                                        <div className="w-3 h-3 border border-yellow-400 border-t-transparent rounded-full animate-spin" />
-                                        <span>Engine initializing...</span>
-                                    </p>
+                                    <p className="text-yellow-600 text-sm mt-2">⚙️ Engine loading...</p>
                                 )}
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
 
-                    {/* Premium Analysis Panel */}
+                    {/* Analysis Panel */}
                     <div className="space-y-6">
-                        {/* Premium Game Info */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
-                        >
-                            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                                <span className="text-2xl mr-3">🎯</span> Game Intelligence
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-300">Opening:</span>
-                                    <span className="font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1 rounded-lg">Spanish Opening</span>
+                        {/* Game Info */}
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Game Info</h3>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Opening:</span>
+                                    <span className="font-medium">Spanish Opening</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-300">Current Move:</span>
-                                    <span className="font-bold text-white">{Math.ceil(currentMove / 2)}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Current Move:</span>
+                                    <span className="font-medium">{Math.ceil(currentMove / 2)}</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-300">Total Moves:</span>
-                                    <span className="font-bold text-white">{Math.ceil(demoMoves.length / 2)}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Total Moves:</span>
+                                    <span className="font-medium">{Math.ceil(demoMoves.length / 2)}</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-300">Engine Status:</span>
-                                    <div className="flex items-center space-x-2">
-                                        <div className={`w-3 h-3 rounded-full ${engineReady ? 'bg-emerald-400' : 'bg-yellow-400'} ${!engineReady ? 'animate-pulse' : ''}`} />
-                                        <span className={`font-bold ${engineReady ? 'text-emerald-300' : 'text-yellow-300'}`}>
-                                            {engineReady ? 'Ready' : 'Initializing...'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-300">Analysis Depth:</span>
-                                    <span className="font-bold text-teal-300">Depth 15</span>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Engine:</span>
+                                    <span className={`font-medium ${engineReady ? 'text-green-600' : 'text-yellow-600'}`}>
+                                        {engineReady ? 'Ready' : 'Loading...'}
+                                    </span>
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
 
-                        {/* Premium Analysis Results */}
+                        {/* Analysis Results */}
                         {analysis.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.5, delay: 0.4 }}
-                                className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
-                            >
-                                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                                    <span className="text-2xl mr-3">📈</span> Move Analysis
-                                </h3>
-                                <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Move Analysis</h3>
+                                <div className="max-h-96 overflow-y-auto space-y-2">
                                     {analysis.map((moveAnalysis, index) => (
-                                        <motion.div
+                                        <div
                                             key={index}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: index * 0.05 }}
-                                            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border ${index === currentMove - 1
-                                                    ? 'bg-emerald-500/20 border-emerald-400/40 shadow-lg'
-                                                    : 'bg-slate-800/30 border-slate-600/30 hover:bg-slate-700/40 hover:border-slate-500/40'
+                                            className={`p-3 rounded cursor-pointer transition-colors ${index === currentMove - 1
+                                                    ? 'bg-blue-100 border border-blue-300'
+                                                    : 'bg-gray-50 hover:bg-gray-100'
                                                 }`}
                                             onClick={() => goToMove(index + 1)}
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
                                         >
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="font-bold text-white">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-medium">
                                                     {Math.ceil((index + 1) / 2)}.{index % 2 === 0 ? ' ' : '.. '}
                                                     {moveAnalysis.move}
                                                 </span>
                                                 <span
-                                                    className={`text-xs px-3 py-1 rounded-full font-bold ${moveAnalysis.classification === 'excellent'
-                                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                                                    className={`text-xs px-2 py-1 rounded ${moveAnalysis.classification === 'excellent'
+                                                            ? 'bg-green-100 text-green-800'
                                                             : moveAnalysis.classification === 'good'
-                                                                ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
+                                                                ? 'bg-blue-100 text-blue-800'
                                                                 : moveAnalysis.classification === 'inaccuracy'
-                                                                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
+                                                                    ? 'bg-yellow-100 text-yellow-800'
                                                                     : moveAnalysis.classification === 'mistake'
-                                                                        ? 'bg-orange-500/20 text-orange-300 border border-orange-400/30'
-                                                                        : 'bg-red-500/20 text-red-300 border border-red-400/30'
+                                                                        ? 'bg-orange-100 text-orange-800'
+                                                                        : 'bg-red-100 text-red-800'
                                                         }`}
                                                 >
                                                     {moveAnalysis.classification}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-gray-400">
-                                                Evaluation: {moveAnalysis.evaluation > 0 ? '+' : ''}{moveAnalysis.evaluation.toFixed(2)}
+                                            <div className="text-sm text-gray-600 mt-1">
+                                                Eval: {moveAnalysis.evaluation > 0 ? '+' : ''}{moveAnalysis.evaluation.toFixed(2)}
                                             </div>
-                                        </motion.div>
+                                        </div>
                                     ))}
                                 </div>
-                            </motion.div>
+                            </div>
                         )}
 
-                        {/* Premium Quick Actions */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5, delay: 0.5 }}
-                            className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-6"
-                        >
-                            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                                <span className="text-2xl mr-3">⚡</span> Quick Actions
-                            </h3>
+                        {/* Quick Actions */}
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                             <div className="space-y-3">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     onClick={() => router.push('/ai-game')}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg border border-white/10"
+                                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                                 >
-                                    🤖 Challenge AI
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    Play vs AI
+                                </button>
+                                <button
                                     onClick={() => router.push('/multiplayer')}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg border border-white/10"
+                                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
                                 >
-                                    👥 Multiplayer Arena
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    Multiplayer Game
+                                </button>
+                                <button
                                     onClick={loadDemoGame}
-                                    className="w-full bg-gradient-to-r from-slate-600 to-slate-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg border border-white/10"
+                                    className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
                                 >
-                                    🔄 Reset Demo
-                                </motion.button>
+                                    Reset Demo
+                                </button>
                             </div>
-                        </motion.div>
-
-                        {/* Premium Features Badge */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5, delay: 0.6 }}
-                            className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-md border border-emerald-400/30 rounded-2xl p-6"
-                        >
-                            <div className="text-center">
-                                <div className="text-3xl mb-3">💎</div>
-                                <h4 className="text-lg font-bold text-emerald-300 mb-2">Premium Analysis</h4>
-                                <p className="text-sm text-gray-300 leading-relaxed">
-                                    Powered by Stockfish engine with deep position evaluation and professional-grade move classification
-                                </p>
-                            </div>
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>
