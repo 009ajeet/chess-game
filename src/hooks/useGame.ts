@@ -5,7 +5,7 @@ import { Chess } from 'chess.js';
 import { GameState, GameMove, User } from '@/types/chess';
 import { doc, onSnapshot, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { stockfishEngine } from '@/lib/stockfish';
+import { getStockfishInstance } from '@/lib/stockfish';
 import toast from 'react-hot-toast';
 
 interface UseGameOptions {
@@ -172,11 +172,11 @@ export const useGame = (options: UseGameOptions) => {
         setIsLoading(true);
 
         try {
-            await stockfishEngine.initialize();
-            stockfishEngine.setSkillLevel(options.aiLevel || 5);
+            const engine = getStockfishInstance();
+            engine.setSkillLevel(options.aiLevel || 5);
 
             await new Promise<void>((resolve) => {
-                stockfishEngine.getBestMove(game.fen(), 2000, (bestMove) => {
+                engine.getBestMove(game.fen(), 2000, (bestMove) => {
                     if (bestMove && bestMove !== '(none)') {
                         const from = bestMove.slice(0, 2);
                         const to = bestMove.slice(2, 4);

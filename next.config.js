@@ -33,7 +33,28 @@ const nextConfig = {
             fs: false,
             net: false,
             tls: false,
+            perf_hooks: false,
+            path: false,
+            os: false,
+            crypto: false,
+            stream: false,
+            assert: false,
+            http: false,
+            https: false,
+            url: false,
+            buffer: false,
+            util: false,
         };
+
+        // Handle stockfish.wasm modules
+        if (!isServer) {
+            config.resolve.alias = {
+                ...config.resolve.alias,
+                'perf_hooks': false,
+                'fs': false,
+                'path': false,
+            };
+        }
 
         return config;
     },

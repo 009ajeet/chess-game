@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { useAuth } from '@/contexts/AuthContext';
-import { stockfishEngine } from '@/lib/stockfish';
+import { getStockfishInstance } from '@/lib/stockfish';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { statsService } from '@/lib/stats';
@@ -25,10 +25,10 @@ export default function AIGamePage() {
 
     useEffect(() => {
         // Initialize Stockfish
-        const initEngine = async () => {
+        const initEngine = () => {
             try {
-                await stockfishEngine.initialize();
-                stockfishEngine.setSkillLevel(difficulty);
+                const engine = getStockfishInstance();
+                engine.setSkillLevel(difficulty);
                 setEngineReady(true);
                 console.log('Stockfish initialized successfully');
             } catch (error) {
@@ -41,13 +41,14 @@ export default function AIGamePage() {
         setGameStartTime(new Date()); // Set game start time
 
         return () => {
-            stockfishEngine.terminate();
+            // Engine cleanup handled by singleton
         };
     }, []);
 
     useEffect(() => {
         if (engineReady) {
-            stockfishEngine.setSkillLevel(difficulty);
+            const engine = getStockfishInstance();
+            engine.setSkillLevel(difficulty);
         }
     }, [difficulty, engineReady]);
 
@@ -57,11 +58,12 @@ export default function AIGamePage() {
         setIsThinking(true);
 
         try {
-            // Increase thinking time based on difficulty level for stronger play
-            const thinkingTime = Math.max(1500, difficulty * 400); // 1.5s to 4s based on difficulty
-            
+            // Reduced thinking time for better user experience (300-800ms)
+            const thinkingTime = Math.max(300, difficulty * 80); // 300ms to 800ms based on difficulty
+
             await new Promise<void>((resolve) => {
-                stockfishEngine.getBestMove(game.fen(), thinkingTime, (bestMove) => {
+                const engine = getStockfishInstance();
+                engine.getBestMove(game.fen(), thinkingTime, (bestMove) => {
                     try {
                         console.log(`AI (Level ${difficulty}) suggested move:`, bestMove, 'after', thinkingTime + 'ms thinking');
 
